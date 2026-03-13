@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Grunnlína Mat — Streita & Taugakerfi</title>
+<style>
+  :root {
+    --bg: #0f1f35;
+    --surface: #1e3456;
+    --surface2: #243f6a;
+    --surface3: #2d4f7e;
+    --border: #2d4a72;
+    --text: #e8f4fd;
+    --text-muted: #8ab4d4;
+    --accent: #63d0ff;
+    --teal: #38b2ac;
+    --teal-light: #81e6d9;
+    --green: #48bb78;
+    --yellow: #f6e05e;
+    --orange: #ed8936;
+    --red: #fc8181;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+  header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 8px; line-height: 1.6; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 28px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+  .progress-bar-bg { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--accent)); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Step */
+  .step { display: none; }
+  .step.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+
+  .step-header { margin-bottom: 20px; }
+  .step-category { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal-light); margin-bottom: 6px; }
+  .step-q { font-size: 1.1rem; font-weight: 600; line-height: 1.5; color: var(--text); }
+  .step-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+  .opt {
+    background: var(--surface);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .opt:hover { border-color: var(--accent); background: var(--surface2); }
+  .opt.selected { border-color: var(--teal); background: rgba(56,178,172,0.1); }
+
+  .opt-radio {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0; margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .opt.selected .opt-radio { border-color: var(--teal); background: var(--teal); }
+  .opt.selected .opt-radio::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+
+  .opt-label { font-size: 0.92rem; line-height: 1.4; }
+  .opt-score { display: none; }
+
+  /* Nav */
+  .nav-row { display: flex; gap: 10px; justify-content: space-between; }
+  .btn-nav {
+    padding: 12px 28px; border-radius: 10px; border: none;
+    font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-back { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-back:hover { background: var(--surface2); color: var(--text); }
+  .btn-next { background: linear-gradient(135deg, #2d7ab5, #38b2ac); color: #fff; flex: 1; }
+  .btn-next:hover { opacity: 0.9; }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Name step */
+  .name-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 14px 16px;
+    font-size: 1.05rem; outline: none; margin-bottom: 24px;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: var(--accent); }
+
+  /* HRV input */
+  .hrv-wrap { margin-bottom: 24px; }
+  .hrv-input-row { display: flex; gap: 12px; align-items: flex-end; }
+  .hrv-input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .hrv-val-input {
+    width: 100px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 12px;
+    font-size: 1.2rem; font-weight: 600; text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+  .hrv-val-input:focus { border-color: var(--accent); }
+  .hrv-skip { font-size: 0.82rem; color: var(--text-muted); margin-top: 8px; cursor: pointer; text-decoration: underline; }
+  .hrv-skip:hover { color: var(--accent); }
+
+  /* Results */
+  .results { display: none; animation: fadeIn 0.4s ease; }
+  .results.visible { display: block; }
+
+  .result-hero { text-align: center; padding: 28px 20px; background: var(--surface); border-radius: 16px; margin-bottom: 20px; }
+  .result-score-ring {
+    width: 120px; height: 120px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    border: 4px solid var(--teal);
+  }
+  .result-score-num { font-size: 2.8rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .result-score-max { font-size: 0.8rem; color: var(--text-muted); }
+  .result-level { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+  .result-tagline { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; max-width: 420px; margin: 0 auto; }
+
+  .result-bars { background: var(--surface); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .result-bars h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; }
+  .rbar-row { margin-bottom: 12px; }
+  .rbar-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
+  .rbar-label span:last-child { color: var(--text-muted); }
+  .rbar-bg { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .rbar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+  .recs-card { background: var(--surface); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .recs-card h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 14px; }
+  .rec-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+  .rec-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .rec-text h4 { font-size: 0.92rem; font-weight: 600; margin-bottom: 3px; }
+  .rec-text p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+
+  .hrv-interp { background: rgba(246,224,94,0.07); border: 1px solid rgba(246,224,94,0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .hrv-interp h3 { font-size: 0.85rem; color: var(--yellow); margin-bottom: 8px; }
+  .hrv-interp p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+  .cta-card { background: linear-gradient(135deg, var(--surface2), rgba(56,178,172,0.1)); border: 1px solid var(--teal); border-radius: 14px; padding: 22px; text-align: center; margin-bottom: 16px; }
+  .cta-card h3 { font-size: 1.1rem; color: var(--teal-light); margin-bottom: 8px; }
+  .cta-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px; }
+  .btn-cta { background: linear-gradient(135deg, #2d7ab5, #38b2ac); color: #fff; border: none; border-radius: 10px; padding: 13px 28px; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn-cta:hover { opacity: 0.9; }
+
+  .save-row { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-save { flex: 1; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); border-radius: 10px; padding: 11px; font-size: 0.85rem; cursor: pointer; }
+  .btn-save:hover { background: var(--surface2); color: var(--text); }
+
+  footer { margin-top: 32px; text-align: center; font-size: 0.75rem; color: var(--text-muted); opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>HRV Grunnlínu Mat</h1>
+  <p>15 spurningar um streitu, svefn, einbeitingu og líðan — til að meta grunnástand taugakerfisins þíns áður en þjálfun hefst</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span id="progLabel">Spurning 1 af 15</span>
+    <span id="progPct">0%</span>
+  </div>
+  <div class="progress-bar-bg"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+</div>
+
+<!-- ===== STEPS ===== -->
+<div id="stepsWrap">
+
+  <!-- Step 0: Name -->
+  <div class="step active" id="step-0">
+    <div class="step-header">
+      <div class="step-category">Upphaf</div>
+      <div class="step-q">Hvað heitir þú?</div>
+      <div class="step-sub">Nafnið þitt birtist á niðurstöðusíðunni. Engin gögn fara til útlanda.</div>
+    </div>
+    <input type="text" class="name-input" id="nameInput" placeholder="Sláðu inn nafn eða gælunafn..." />
+    <div class="nav-row">
+      <button class="btn-nav btn-next" onclick="nextStep()" id="btn-0">Áfram</button>
+    </div>
+  </div>
+
+  <!-- Steps 1-12: Questions -->
+</div>
+
+<!-- ===== RESULTS ===== -->
+<div class="results" id="resultsWrap"></div>
+
+<footer>HRV Biofeedback Mat · Byggt á rannsókn</footer>
+
+<script>
+// =============================================
+// QUESTIONS DATA
+// =============================================
+const QUESTIONS = [
+  {
+    id: 1, category: "Streita", weight: "streita",
+    q: "Hversu oft finnur þú til streitu eða þrýstings í daglegu lífi?",
+    sub: "Hugsaðu um síðustu 2 vikur.",
+    options: [
+      { text: "Sjaldan eða aldrei", score: 4 },
+      { text: "Stundum — nokkrum sinnum í viku", score: 3 },
+      { text: "Oft — flestu daga", score: 2 },
+      { text: "Næstum alltaf — stöðugt", score: 1 },
+    ]
+  },
+  {
+    id: 2, category: "Streita", weight: "streita",
+    q: "Hversu vel náir þú að slaka af eftir krefjandi dag?",
+    sub: "",
+    options: [
+      { text: "Mjög vel — ég slaka af fljótt", score: 4 },
+      { text: "Nokkuð vel — tekur smá tíma", score: 3 },
+      { text: "Erfiðlega — hugurinn er lengi í gangi", score: 2 },
+      { text: "Mjög erfitt — ég get varla slakað af", score: 1 },
+    ]
+  },
+  {
+    id: 3, category: "Svefn", weight: "svefn",
+    q: "Hvernig myndir þú lýsa svefni þínum undanfarnar tvær vikur?",
+    sub: "",
+    options: [
+      { text: "Góður — ég sofna fljótt og vakna hvíld/ur", score: 4 },
+      { text: "Meðallegur — stundum erfitt að sofna eða ég vakna snemma", score: 3 },
+      { text: "Slæmur — oft erfitt að sofna eða svefninn er stuttur", score: 2 },
+      { text: "Mjög slæmur — ég sof lítið og vakna þreytt/ur", score: 1 },
+    ]
+  },
+  {
+    id: 4, category: "Svefn", weight: "svefn",
+    q: "Hversu margar klukkustundir sefur þú að meðaltali á nótt?",
+    sub: "",
+    options: [
+      { text: "8+ klukkustundir", score: 4 },
+      { text: "7–8 klukkustundir", score: 3 },
+      { text: "6–7 klukkustundir", score: 2 },
+      { text: "Minna en 6 klukkustundir", score: 1 },
+    ]
+  },
+  {
+    id: 5, category: "Einbeiting", weight: "einbeiting",
+    q: "Hversu auðvelt er þér að einbeita þér þegar þú þarft?",
+    sub: "Hugsaðu um vinnu, nám eða flókin verkefni.",
+    options: [
+      { text: "Mjög auðvelt — ég get einbeitt mér í langan tíma", score: 4 },
+      { text: "Nokkuð auðvelt — á góðum dögum", score: 3 },
+      { text: "Oft erfitt — hugurinn flakkar", score: 2 },
+      { text: "Mjög erfitt — ég á mjög erfitt með einbeitingu", score: 1 },
+    ]
+  },
+  {
+    id: 6, category: "Einbeiting", weight: "einbeiting",
+    q: "Hvernig hefur minni þitt og skammtímaminni verið undanfarið?",
+    sub: "",
+    options: [
+      { text: "Mjög gott", score: 4 },
+      { text: "Nokkuð gott", score: 3 },
+      { text: "Eitthvað minna — gleymi stundum", score: 2 },
+      { text: "Talsvert lakara en venjulega", score: 1 },
+    ]
+  },
+  {
+    id: 7, category: "Líðan", weight: "lidan",
+    q: "Hvernig myndir þú lýsa almennri líðan þinni?",
+    sub: "Heildarmynd af undanförnum 2 vikum.",
+    options: [
+      { text: "Mjög vel — ánægja og orka", score: 4 },
+      { text: "Nokkuð vel — flestu daga", score: 3 },
+      { text: "Blandað — göngur upp og niður", score: 2 },
+      { text: "Frekar illa — þreyta og slenur", score: 1 },
+    ]
+  },
+  {
+    id: 8, category: "Líðan", weight: "lidan",
+    q: "Hvernig er orkustig þitt yfir daginn?",
+    sub: "",
+    options: [
+      { text: "Jafnt og gott — ég finn lítið til þreytu", score: 4 },
+      { text: "Nokkuð gott — einhver þreyta á eftir hádegi", score: 3 },
+      { text: "Sveiflukent — oft þreytt/ur eftir hádegi", score: 2 },
+      { text: "Þreyttt/ur mestan hluta dags", score: 1 },
+    ]
+  },
+  {
+    id: 9, category: "Taugakerfi", weight: "taugakerfi",
+    q: "Hversu oft finnur þú hjartað þitt berja — án þess að vera að hlaupa eða líkamleg álag?",
+    sub: "T.d. í streitu, kvíða eða eftir kaffi.",
+    options: [
+      { text: "Sjaldan eða aldrei", score: 4 },
+      { text: "Stundum — nokkrum sinnum í viku", score: 3 },
+      { text: "Oft", score: 2 },
+      { text: "Mjög oft eða daglega", score: 1 },
+    ]
+  },
+  {
+    id: 10, category: "Taugakerfi", weight: "taugakerfi",
+    q: "Hvernig er öndun þín að jafnaði?",
+    sub: "Ekki við hlaup eða æfingu — við kyrrsetu eða vinnuna.",
+    options: [
+      { text: "Hæg og djúp — ég tek sjaldan eftir henni", score: 4 },
+      { text: "Venjuleg — ekkert sérstakt", score: 3 },
+      { text: "Stundum grunnar eða hröð — sérstaklega í streitu", score: 2 },
+      { text: "Oft grunnar eða hröð", score: 1 },
+    ]
+  },
+  {
+    id: 11, category: "Jafnvægi", weight: "jafnaegi",
+    q: "Hversu oft finnur þú þér fullnægt á vinnudegi — þ.e. að þú hafir getað gefið það besta þitt?",
+    sub: "",
+    options: [
+      { text: "Flestu daga", score: 4 },
+      { text: "Nokkrum sinnum í viku", score: 3 },
+      { text: "Stundum — sjaldnar en æskilegt", score: 2 },
+      { text: "Sjaldan eða aldrei", score: 1 },
+    ]
+  },
+  {
+    id: 12, category: "Jafnvægi", weight: "jafnaegi",
+    q: "Hversu oft gefur þú þér tíma til að hvíla hugann — án síma, skjás eða vinnu?",
+    sub: "T.d. ganga, vera í náttúrunni, minnislega hvíld.",
+    options: [
+      { text: "Daglega", score: 4 },
+      { text: "Nokkrum sinnum í viku", score: 3 },
+      { text: "Sjaldan", score: 2 },
+      { text: "Næstum aldrei", score: 1 },
+    ]
+  },
+  {
+    id: 13, category: "Líkamsrækt", weight: "lidan",
+    q: "Hversu oft stundast þú líkamsar æfingar (hlaup, ganga, sund, ...).",
+    sub: "Minnst 20 mínútur í senn.",
+    options: [
+      { text: "4–7 sinnum í viku", score: 4 },
+      { text: "2–3 sinnum í viku", score: 3 },
+      { text: "1 sinni í viku eða sjaldnar", score: 2 },
+      { text: "Næstum aldrei", score: 1 },
+    ]
+  },
+  {
+    id: 14, category: "Streita", weight: "streita",
+    q: "Hvernig bregst líkaminn þinn við streitu — t.d. strum, pirringur, höfuðverkur, magakvillar?",
+    sub: "",
+    options: [
+      { text: "Lítið sem ekkert — ég finn sjaldan líkamlegar streitueinkenni", score: 4 },
+      { text: "Stundum — eftir mjög krefjandi daga", score: 3 },
+      { text: "Oft — líkaminn svarar hratt til streitu", score: 2 },
+      { text: "Mjög oft — flestu daga", score: 1 },
+    ]
+  },
+  {
+    id: 15, category: "HRV Mat", weight: "hrv",
+    q: "Hefur þú mælt HRV þína (RMSSD) áður?",
+    sub: "T.d. með Polar H10, HRV4Training eða öðru app.",
+    isHRV: true,
+    options: [
+      { text: "Já — ég veit hvað talan er", score: 0 },
+      { text: "Nei — ég hef aldrei mælt", score: 0 },
+    ]
+  },
+];
+
+// =============================================
+// STATE
+// =============================================
+let currentStep = 0;
+let answers = {}; // questionId → score
+let userName = '';
+let hrvValue = null;
+let knowsHRV = false;
+
+// =============================================
+// RENDER QUESTIONS
+// =============================================
+function buildSteps() {
+  const wrap = document.getElementById('stepsWrap');
+
+  QUESTIONS.forEach((q, idx) => {
+    const stepNum = idx + 1;
+    const div = document.createElement('div');
+    div.className = 'step';
+    div.id = `step-${stepNum}`;
+
+    const optsHtml = q.options.map((opt, oi) => `
+      <div class="opt" data-step="${stepNum}" data-oi="${oi}" data-score="${opt.score}" onclick="selectOpt(${stepNum},${oi},${opt.score})">
+        <div class="opt-radio"></div>
+        <div class="opt-label">${opt.text}</div>
+      </div>
+    `).join('');
+
+    const hrvHtml = q.isHRV ? `
+      <div class="hrv-wrap" id="hrv-input-wrap" style="display:none">
+        <div class="hrv-input-row">
+          <div class="hrv-input-group">
+            <label>RMSSD (ms)</label>
+            <input type="number" class="hrv-val-input" id="hrv-val" placeholder="t.d. 42" min="5" max="200" oninput="setHRV(this.value)">
+          </div>
+        </div>
+        <div class="hrv-skip" onclick="skipHRV()">Ég veit ekki töluna — sleppa</div>
+      </div>` : '';
+
+    div.innerHTML = `
+      <div class="step-header">
+        <div class="step-category">${q.category}</div>
+        <div class="step-q">${q.q}</div>
+        ${q.sub ? `<div class="step-sub">${q.sub}</div>` : ''}
+      </div>
+      <div class="options">${optsHtml}</div>
+      ${hrvHtml}
+      <div class="nav-row">
+        ${stepNum > 1 ? `<button class="btn-nav btn-back" onclick="prevStep()">Til baka</button>` : ''}
+        <button class="btn-nav btn-next" id="btn-${stepNum}" onclick="nextStep()" disabled>
+          ${stepNum === QUESTIONS.length ? 'Sjá niðurstöður' : 'Áfram'}
+        </button>
+      </div>
+    `;
+
+    wrap.appendChild(div);
+  });
+}
+
+function selectOpt(stepNum, oi, score) {
+  const qIdx = stepNum - 1;
+  const q = QUESTIONS[qIdx];
+  answers[q.id] = { score, weight: q.weight };
+
+  // Visual
+  document.querySelectorAll(`[data-step="${stepNum}"]`).forEach(el => el.classList.remove('selected'));
+  document.querySelector(`[data-step="${stepNum}"][data-oi="${oi}"]`).classList.add('selected');
+
+  // HRV question special handling
+  if (q.isHRV) {
+    knowsHRV = oi === 0;
+    const wrap = document.getElementById('hrv-input-wrap');
+    if (wrap) wrap.style.display = knowsHRV ? 'block' : 'none';
+    if (!knowsHRV) {
+      document.getElementById(`btn-${stepNum}`).disabled = false;
+    }
+  } else {
+    document.getElementById(`btn-${stepNum}`).disabled = false;
+  }
+}
+
+function setHRV(val) {
+  hrvValue = parseFloat(val);
+  const btn = document.getElementById(`btn-${QUESTIONS.length}`);
+  if (btn && hrvValue > 0) btn.disabled = false;
+}
+
+function skipHRV() {
+  hrvValue = null;
+  knowsHRV = false;
+  document.getElementById(`btn-${QUESTIONS.length}`).disabled = false;
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+function nextStep() {
+  if (currentStep === 0) {
+    userName = document.getElementById('nameInput').value.trim() || 'Þátttakandi';
+  }
+
+  if (currentStep === QUESTIONS.length) {
+    showResults();
+    return;
+  }
+
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  currentStep++;
+  document.getElementById(`step-${currentStep}`).classList.add('active');
+  updateProgress();
+}
+
+function prevStep() {
+  if (currentStep <= 1) return;
+  document.getElementById(`step-${currentStep}`).classList.remove('active');
+  currentStep--;
+  document.getElementById(`step-${currentStep}`).classList.add('active');
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = QUESTIONS.length;
+  const pct = Math.round((currentStep / total) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progLabel').textContent = currentStep === 0 ? 'Upphaf' : `Spurning ${currentStep} af ${total}`;
+  document.getElementById('progPct').textContent = pct + '%';
+}
+
+// =============================================
+// RESULTS
+// =============================================
+function showResults() {
+  document.getElementById('stepsWrap').style.display = 'none';
+  document.querySelector('.progress-wrap').style.display = 'none';
+
+  // Calculate scores by category
+  const cats = { streita: [], svefn: [], einbeiting: [], lidan: [], taugakerfi: [], jafnaegi: [] };
+  const catMax = { streita: 0, svefn: 0, einbeiting: 0, lidan: 0, taugakerfi: 0, jafnaegi: 0 };
+
+  QUESTIONS.filter(q => !q.isHRV).forEach(q => {
+    catMax[q.weight] = (catMax[q.weight] || 0) + 4;
+    if (answers[q.id]) cats[q.weight].push(answers[q.id].score);
+  });
+
+  const catScores = {};
+  Object.keys(cats).forEach(k => {
+    const sum = cats[k].reduce((a,b) => a+b, 0);
+    catScores[k] = { sum, max: catMax[k], pct: Math.round((sum / catMax[k]) * 100) };
+  });
+
+  const totalSum = Object.values(catScores).reduce((a,b) => a + b.sum, 0);
+  const totalMax = Object.values(catScores).reduce((a,b) => a + b.max, 0);
+  const totalPct = Math.round((totalSum / totalMax) * 100);
+
+  // Level
+  let level, levelColor, tagline, recs;
+  if (totalPct >= 80) {
+    level = 'Mjög gott jafnvægi'; levelColor = 'var(--green)';
+    tagline = 'Taugakerfið þitt er í góðu ástandi. HRV biofeedback þjálfun getur aukið sveigjanleikann enn frekar og hjálpað þér að viðhalda þessari stöðu undir álagi.';
+    recs = [
+      { icon: '⚡', title: 'Viðhaldsþjálfun', desc: '3–5 æfingar á viku, 20 mínútur. Þú þarft ekki endilega að gera tvisvar á dag til að viðhalda góðri stöðu.' },
+      { icon: '📊', title: 'Fylgstu með þróun', desc: 'Mæling á HRV 2–3 sinnum í viku hjálpar þér að sjá hvernig líkaminn bregst við þreytu og álagi.' },
+      { icon: '🎯', title: 'Markmið', desc: 'Skoðaðu hvort HRV biofeedback geti bætt frammistöðu og einbeitingu enn frekar — rannsóknin sýndi breytingar jafnvel hjá þeim sem voru í góðu ástandi.' },
+    ];
+  } else if (totalPct >= 60) {
+    level = 'Meðallag — tækifæri til bóta'; levelColor = 'var(--yellow)';
+    tagline = 'Taugakerfið þitt er að vinna en þarf að jafna sig betur. Þetta er algengasta staðan hjá fólki með kröfuharða vinnu. HRV biofeedback þjálfun hentar þér mjög vel.';
+    recs = [
+      { icon: '🔄', title: 'Byrjaðu með tvisvar á dag', desc: '20 mínútur að morgni og kvöldi eru kjörar til að raunverulegur breyting komi fram. Gefðu þér 4–6 vikur.' },
+      { icon: '😴', title: 'Svefnur fyrst', desc: 'Ef svefn er eitt svæðanna þar sem þú farir lítið — eitt einasta skref í rétta átt getur haft mikil áhrif á HRV.' },
+      { icon: '📓', title: 'Dagbókarskráning', desc: 'Skráðu líðan, streitu og einbeitingu daglega. Þróunin yfir 4 vikur verður áhugaverðasta gagnasettið þitt.' },
+    ];
+  } else if (totalPct >= 40) {
+    level = 'Mikið álag — taugakerfið þarft stuðning'; levelColor = 'var(--orange)';
+    tagline = 'Kerfið þitt er undir verulegum álagi. Þetta er merki um að parasympatíska kerfið fær ekki nóg tíma til endurnýjunar. HRV biofeedback þjálfun er sérstaklega mikilvæg fyrir þig.';
+    recs = [
+      { icon: '🛑', title: 'Forgangsraðaðu hvíldinni', desc: 'Áður en þú bætir við þjálfun — hugðu um hvað í dagskrá þinni er að þrengja að endurnýjunartímanum.' },
+      { icon: '🌬️', title: 'Byrjaðu smátt', desc: 'Eðlilegt er að byrja með 10 mínútna æfingum. Samkvæmni er mikilvægari en lengd í upphafi.' },
+      { icon: '🤝', title: 'Community stuðningur', desc: 'Í community-inu eru aðrir í svipaðri stöðu. Sameiginlegur stuðningur auðveldar þjálfunina.' },
+    ];
+  } else {
+    level = 'Hátt álag — bráð þörf á breytingu'; levelColor = 'var(--red)';
+    tagline = 'Gögn þín benda til verulegrar þreytu og álags á taugakerfið. Þú þarft á stuðningi að halda — og HRV biofeedback þjálfun getur verið hluti af lausninni.';
+    recs = [
+      { icon: '🏥', title: 'Skoðaðu heilsugæslu', desc: 'Við mælum með að tala við lækni eða sálfræðing ef streita hefur staðið lengi yfir. Biofeedback er gott hjálpartæki en ekki í staðinn fyrir faglegan stuðning.' },
+      { icon: '🌬️', title: 'Mini-öndun í dag', desc: 'Farðu í öndunarverkfærið okkar — 5 mínútur. Þetta er fyrsti skrefurinn.' },
+      { icon: '📩', title: 'Hafa samband', desc: 'Við viljum hjálpa þér að finna réttu námskeiðið og stuðninginn.' },
+    ];
+  }
+
+  // HRV interpretation
+  let hrvHtml = '';
+  if (hrvValue) {
+    let interp;
+    if (hrvValue < 20) interp = `RMSSD ${hrvValue} ms er mjög lág. Þetta er í samræmi við mjög mikið álag. HRV biofeedback þjálfun hefur sýnt marktækar breytingar hjá þessum hóp yfir 4–8 vikur.`;
+    else if (hrvValue < 40) interp = `RMSSD ${hrvValue} ms er á lægri meðalgildi. Þjálfun í 4–6 vikur ætti að sýna mælanleg framfarir.`;
+    else if (hrvValue < 60) interp = `RMSSD ${hrvValue} ms er í meðalgildi. Þú ert á góðum stað — þjálfunin getur hækkað þetta enn frekar.`;
+    else interp = `RMSSD ${hrvValue} ms er há HRV — mjög gott! Þetta er svipað og við sjáum hjá vel þjálfuðum einstaklingum. Þjálfunin getur viðhaldið og aukið þetta gildi.`;
+
+    hrvHtml = `
+      <div class="hrv-interp">
+        <h3>HRV túlkun — RMSSD ${hrvValue} ms</h3>
+        <p>${interp}</p>
+      </div>`;
+  }
+
+  // Category bar colors
+  const barColors = {
+    streita: '#fc8181', svefn: '#63d0ff', einbeiting: '#81e6d9',
+    lidan: '#4fc3f7', taugakerfi: '#b794f4', jafnaegi: '#f6e05e'
+  };
+  const catLabels = {
+    streita: 'Streituþol', svefn: 'Svefn', einbeiting: 'Einbeiting',
+    lidan: 'Líðan & Orka', taugakerfi: 'Taugakerfi', jafnaegi: 'Jafnvægi'
+  };
+
+  const barsHtml = Object.keys(catScores).map(k => `
+    <div class="rbar-row">
+      <div class="rbar-label">
+        <span>${catLabels[k]}</span>
+        <span>${catScores[k].pct}%</span>
+      </div>
+      <div class="rbar-bg">
+        <div class="rbar-fill" style="width:${catScores[k].pct}%;background:${barColors[k]}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  const recsHtml = recs.map(r => `
+    <div class="rec-item">
+      <div class="rec-icon">${r.icon}</div>
+      <div class="rec-text"><h4>${r.title}</h4><p>${r.desc}</p></div>
+    </div>
+  `).join('');
+
+  document.getElementById('resultsWrap').innerHTML = `
+    <div class="result-hero">
+      <div class="result-score-ring" style="border-color:${levelColor}">
+        <div class="result-score-num" style="color:${levelColor}">${totalPct}</div>
+        <div class="result-score-max">af 100</div>
+      </div>
+      <div class="result-level" style="color:${levelColor}">${level}</div>
+      <p class="result-tagline">Hæ ${userName}! ${tagline}</p>
+    </div>
+
+    <div class="result-bars">
+      <h3>Niðurstaður eftir flokki</h3>
+      ${barsHtml}
+    </div>
+
+    ${hrvHtml}
+
+    <div class="recs-card">
+      <h3>Ráðleggingar fyrir þig</h3>
+      ${recsHtml}
+    </div>
+
+    <div class="cta-card">
+      <h3>Tilbúin/n að byrja þjálfunina?</h3>
+      <p>Þetta mat er grunnlínan þín. Eftir 4 vikna HRV biofeedback þjálfun munum við gera sama mat aftur — og bera saman. Rannsóknin okkar sýndi marktækar breytingar eftir 5 vikur.</p>
+      <button class="btn-cta" onclick="alert('Tenging við platform kemur hér')">Byrja 4 vikna þjálfun →</button>
+    </div>
+
+    <div class="save-row">
+      <button class="btn-save" onclick="printResults()">Prenta niðurstöður</button>
+      <button class="btn-save" onclick="location.reload()">Gera aftur</button>
+    </div>
+  `;
+
+  document.getElementById('resultsWrap').classList.add('visible');
+}
+
+function printResults() { window.print(); }
+
+// =============================================
+// INIT
+// =============================================
+buildSteps();
+</script>
+</body>
+</html>

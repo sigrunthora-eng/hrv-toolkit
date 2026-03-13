@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Öndunarþjálfun — Resonance Öndun</title>
+<style>
+  :root {
+    --blue-deep: #1a2a4a;
+    --blue-mid: #2d5a8e;
+    --blue-light: #4a9fd4;
+    --teal: #38b2ac;
+    --teal-light: #81e6d9;
+    --bg: #0f1f35;
+    --surface: #1e3456;
+    --surface2: #243f6a;
+    --text: #e8f4fd;
+    --text-muted: #8ab4d4;
+    --accent: #63d0ff;
+    --inhale-color: #4fc3f7;
+    --exhale-color: #38b2ac;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-top: 10px;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+
+  header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .controls-top {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .control-group {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-width: 160px;
+  }
+
+  .control-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .btn-option {
+    background: var(--surface2);
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-option:hover {
+    background: var(--blue-mid);
+    color: var(--text);
+  }
+
+  .btn-option.active {
+    background: var(--blue-mid);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .breathing-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .circle-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .circle-outer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,159,212,0.08) 0%, transparent 70%);
+    border: 1px solid rgba(74,159,212,0.15);
+  }
+
+  .circle-main {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4fc3f7, #1a6fa3);
+    box-shadow: 0 0 40px rgba(79,195,247,0.3), 0 0 80px rgba(79,195,247,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+  }
+
+  .circle-main.inhaling {
+    animation: inhaleExpand var(--inhale-dur) ease-in-out forwards;
+    background: radial-gradient(circle at 35% 35%, #63d0ff, #2d7ab5);
+    box-shadow: 0 0 60px rgba(99,208,255,0.4), 0 0 100px rgba(99,208,255,0.15);
+  }
+
+  .circle-main.exhaling {
+    animation: exhaleContract var(--exhale-dur) ease-in-out forwards;
+    background: radial-gradient(circle at 35% 35%, #38b2ac, #1a6fa3);
+    box-shadow: 0 0 30px rgba(56,178,172,0.25);
+  }
+
+  @keyframes inhaleExpand {
+    from { transform: scale(1); }
+    to { transform: scale(1.28); }
+  }
+
+  @keyframes exhaleContract {
+    from { transform: scale(1.28); }
+    to { transform: scale(1); }
+  }
+
+  .phase-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  .phase-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4);
+  }
+
+  .phase-sek {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .timer-display {
+    margin-top: 18px;
+    text-align: center;
+  }
+
+  .timer-main {
+    font-size: 2.4rem;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .timer-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .progress-bar-wrap {
+    width: 260px;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--accent));
+    border-radius: 2px;
+    transition: width 1s linear;
+    width: 0%;
+  }
+
+  .breath-info {
+    display: flex;
+    gap: 20px;
+    margin-top: 14px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .breath-info span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-in { background: var(--inhale-color); }
+  .dot-out { background: var(--exhale-color); }
+
+  .action-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .btn-main {
+    padding: 14px 36px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+
+  #btn-start {
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(45,122,181,0.35);
+  }
+
+  #btn-start:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(45,122,181,0.5); }
+  #btn-start:active { transform: translateY(0); }
+
+  #btn-reset {
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--surface2);
+  }
+
+  #btn-reset:hover { background: var(--surface2); color: var(--text); }
+
+  .breath-rate-info {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 14px 20px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .breath-rate-info .rate-title {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .rate-numbers {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  .rate-val { text-align: center; }
+  .rate-val .num { font-size: 1.4rem; font-weight: 600; color: var(--accent); }
+  .rate-val .lbl { font-size: 0.72rem; color: var(--text-muted); }
+
+  .session-stats {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 14px 20px;
+    max-width: 340px;
+    width: 100%;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .session-stats.visible { display: block; }
+
+  .session-stats h3 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-item .s-num { font-size: 1.3rem; font-weight: 600; color: var(--teal-light); }
+  .stat-item .s-lbl { font-size: 0.72rem; color: var(--text-muted); }
+
+  .done-banner {
+    display: none;
+    background: linear-gradient(135deg, var(--surface), #1a4a3a);
+    border: 1px solid var(--teal);
+    border-radius: 12px;
+    padding: 16px 24px;
+    text-align: center;
+    max-width: 340px;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .done-banner.visible { display: block; }
+  .done-banner h3 { color: var(--teal-light); font-size: 1.1rem; margin-bottom: 4px; }
+  .done-banner p { color: var(--text-muted); font-size: 0.85rem; }
+
+  footer {
+    margin-top: 20px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Resonance Öndunarþjálfun</h1>
+  <p>HRV Biofeedback · Veldu tíðni og tíma, byrjaðu síðan</p>
+</header>
+
+<div class="controls-top">
+  <div class="control-group">
+    <label>Andardráttartíðni</label>
+    <div class="btn-group" id="rateGroup">
+      <button class="btn-option" data-bpm="5" data-in="4.8" data-out="7.2">5 bpm</button>
+      <button class="btn-option" data-bpm="5.5" data-in="4.4" data-out="6.6">5.5</button>
+      <button class="btn-option" data-bpm="6" data-in="4.0" data-out="6.0" >6</button>
+      <button class="btn-option active" data-bpm="6.5" data-in="3.7" data-out="5.5">6.5</button>
+      <button class="btn-option" data-bpm="7" data-in="3.4" data-out="5.2">7 bpm</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Lengd æfingar</label>
+    <div class="btn-group" id="durationGroup">
+      <button class="btn-option" data-min="5">5 mín</button>
+      <button class="btn-option" data-min="10">10 mín</button>
+      <button class="btn-option active" data-min="20">20 mín</button>
+    </div>
+  </div>
+</div>
+
+<div class="breathing-area">
+  <div class="circle-container">
+    <div class="circle-outer"></div>
+    <div class="circle-main" id="breathCircle">
+      <div class="phase-text" id="phaseText">Tilbúin/n?</div>
+      <div class="phase-count" id="phaseCount">—</div>
+      <div class="phase-sek" id="phaseUnit"></div>
+    </div>
+  </div>
+
+  <div class="timer-display">
+    <div class="timer-main" id="timerDisplay">20:00</div>
+    <div class="timer-label">eftir af æfingunni</div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="breath-info">
+    <span><span class="dot dot-in"></span> Inn: <strong id="inLabel">3.7 sek</strong></span>
+    <span><span class="dot dot-out"></span> Út: <strong id="outLabel">5.5 sek</strong></span>
+    <span>— <strong id="bpmLabel">6.5</strong> bpm</span>
+  </div>
+</div>
+
+<div class="action-row">
+  <button class="btn-main" id="btn-start">Byrja</button>
+  <button class="btn-main" id="btn-reset">Endurstilla</button>
+</div>
+
+<div class="breath-rate-info">
+  <div class="rate-title">Valin tíðni — inn/útöndunartímar</div>
+  <div class="rate-numbers">
+    <div class="rate-val">
+      <div class="num" id="inTime">3.7</div>
+      <div class="lbl">sek inn</div>
+    </div>
+    <div class="rate-val">
+      <div class="num" id="outTime">5.5</div>
+      <div class="lbl">sek út</div>
+    </div>
+    <div class="rate-val">
+      <div class="num" id="bpmInfo">6.5</div>
+      <div class="lbl">bpm</div>
+    </div>
+  </div>
+</div>
+
+<div class="session-stats" id="sessionStats">
+  <h3>Þessi lota</h3>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="s-num" id="statBreaths">0</div>
+      <div class="s-lbl">andardráttar</div>
+    </div>
+    <div class="stat-item">
+      <div class="s-num" id="statMinutes">0:00</div>
+      <div class="s-lbl">mínútur liðnar</div>
+    </div>
+  </div>
+</div>
+
+<div class="done-banner" id="doneBanner">
+  <h3>Frábært! Æfingin er lokið.</h3>
+  <p>Skráðu þig í dagbókina og gefðu þér einkunn.</p>
+</div>
+
+<footer>Resonance öndun · Byggt á HRV biofeedback rannsókn</footer>
+
+<script>
+  // --- State ---
+  let selectedBpm = 6.5;
+  let selectedInSec = 3.7;
+  let selectedOutSec = 5.5;
+  let selectedMinutes = 20;
+  let isRunning = false;
+  let isPaused = false;
+
+  let totalSeconds = 0;
+  let elapsedSeconds = 0;
+  let breathCount = 0;
+  let phaseTimer = null;
+  let countdownTimer = null;
+  let phaseSecondsLeft = 0;
+  let currentPhase = 'inhale'; // 'inhale' | 'exhale'
+
+  const circle = document.getElementById('breathCircle');
+  const phaseText = document.getElementById('phaseText');
+  const phaseCount = document.getElementById('phaseCount');
+  const phaseUnit = document.getElementById('phaseUnit');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const progressBar = document.getElementById('progressBar');
+  const btnStart = document.getElementById('btn-start');
+  const btnReset = document.getElementById('btn-reset');
+  const sessionStats = document.getElementById('sessionStats');
+  const doneBanner = document.getElementById('doneBanner');
+
+  // --- Controls ---
+  document.getElementById('rateGroup').addEventListener('click', e => {
+    const btn = e.target.closest('.btn-option');
+    if (!btn || isRunning) return;
+    document.querySelectorAll('#rateGroup .btn-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedBpm = parseFloat(btn.dataset.bpm);
+    selectedInSec = parseFloat(btn.dataset.in);
+    selectedOutSec = parseFloat(btn.dataset.out);
+    updateInfoDisplay();
+  });
+
+  document.getElementById('durationGroup').addEventListener('click', e => {
+    const btn = e.target.closest('.btn-option');
+    if (!btn || isRunning) return;
+    document.querySelectorAll('#durationGroup .btn-option').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedMinutes = parseInt(btn.dataset.min);
+    updateInfoDisplay();
+    resetTimer();
+  });
+
+  function updateInfoDisplay() {
+    document.getElementById('inLabel').textContent = selectedInSec.toFixed(1) + ' sek';
+    document.getElementById('outLabel').textContent = selectedOutSec.toFixed(1) + ' sek';
+    document.getElementById('bpmLabel').textContent = selectedBpm;
+    document.getElementById('inTime').textContent = selectedInSec.toFixed(1);
+    document.getElementById('outTime').textContent = selectedOutSec.toFixed(1);
+    document.getElementById('bpmInfo').textContent = selectedBpm;
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2,'0')}`;
+  }
+
+  function resetTimer() {
+    totalSeconds = selectedMinutes * 60;
+    timerDisplay.textContent = formatTime(totalSeconds);
+    progressBar.style.width = '0%';
+  }
+
+  // --- Breathing Engine ---
+  function startBreathing() {
+    totalSeconds = selectedMinutes * 60;
+    elapsedSeconds = 0;
+    breathCount = 0;
+    isRunning = true;
+    doneBanner.classList.remove('visible');
+    sessionStats.classList.add('visible');
+
+    // Main countdown
+    countdownTimer = setInterval(() => {
+      elapsedSeconds++;
+      const remaining = totalSeconds - elapsedSeconds;
+      timerDisplay.textContent = formatTime(Math.max(0, remaining));
+      progressBar.style.width = ((elapsedSeconds / totalSeconds) * 100) + '%';
+      document.getElementById('statMinutes').textContent = formatTime(elapsedSeconds);
+
+      if (elapsedSeconds >= totalSeconds) {
+        endSession();
+      }
+    }, 1000);
+
+    // Set CSS vars for animation duration
+    circle.style.setProperty('--inhale-dur', selectedInSec + 's');
+    circle.style.setProperty('--exhale-dur', selectedOutSec + 's');
+
+    startInhale();
+  }
+
+  function startInhale() {
+    if (!isRunning) return;
+    currentPhase = 'inhale';
+    phaseSecondsLeft = Math.round(selectedInSec);
+    phaseText.textContent = 'Andaðu inn';
+    phaseCount.textContent = phaseSecondsLeft;
+    phaseUnit.textContent = 'sek';
+
+    circle.className = 'circle-main inhaling';
+
+    const totalMs = selectedInSec * 1000;
+    const steps = Math.round(selectedInSec);
+    let step = 0;
+
+    clearInterval(phaseTimer);
+    phaseTimer = setInterval(() => {
+      step++;
+      phaseSecondsLeft = Math.max(0, Math.round(selectedInSec) - step);
+      phaseCount.textContent = phaseSecondsLeft || '';
+      if (step >= steps) {
+        clearInterval(phaseTimer);
+        setTimeout(() => { if (isRunning) startExhale(); }, (selectedInSec - steps) * 1000 + 50);
+      }
+    }, 1000);
+  }
+
+  function startExhale() {
+    if (!isRunning) return;
+    currentPhase = 'exhale';
+    phaseSecondsLeft = Math.round(selectedOutSec);
+    phaseText.textContent = 'Andaðu út';
+    phaseCount.textContent = phaseSecondsLeft;
+
+    circle.className = 'circle-main exhaling';
+
+    breathCount++;
+    document.getElementById('statBreaths').textContent = breathCount;
+
+    const steps = Math.round(selectedOutSec);
+    let step = 0;
+
+    clearInterval(phaseTimer);
+    phaseTimer = setInterval(() => {
+      step++;
+      phaseSecondsLeft = Math.max(0, Math.round(selectedOutSec) - step);
+      phaseCount.textContent = phaseSecondsLeft || '';
+      if (step >= steps) {
+        clearInterval(phaseTimer);
+        setTimeout(() => { if (isRunning) startInhale(); }, (selectedOutSec - steps) * 1000 + 50);
+      }
+    }, 1000);
+  }
+
+  function endSession() {
+    isRunning = false;
+    clearInterval(phaseTimer);
+    clearInterval(countdownTimer);
+    circle.className = 'circle-main';
+    phaseText.textContent = 'Lokið!';
+    phaseCount.textContent = '';
+    phaseUnit.textContent = '';
+    btnStart.textContent = 'Byrja aftur';
+    doneBanner.classList.add('visible');
+  }
+
+  btnStart.addEventListener('click', () => {
+    if (isRunning) {
+      // pause
+      isRunning = false;
+      clearInterval(phaseTimer);
+      clearInterval(countdownTimer);
+      circle.className = 'circle-main';
+      phaseText.textContent = 'Hlé';
+      phaseCount.textContent = '';
+      btnStart.textContent = 'Halda áfram';
+    } else {
+      btnStart.textContent = 'Hlé';
+      if (elapsedSeconds > 0 && elapsedSeconds < totalSeconds) {
+        // resume
+        isRunning = true;
+        countdownTimer = setInterval(() => {
+          elapsedSeconds++;
+          const remaining = totalSeconds - elapsedSeconds;
+          timerDisplay.textContent = formatTime(Math.max(0, remaining));
+          progressBar.style.width = ((elapsedSeconds / totalSeconds) * 100) + '%';
+          document.getElementById('statMinutes').textContent = formatTime(elapsedSeconds);
+          if (elapsedSeconds >= totalSeconds) endSession();
+        }, 1000);
+        if (currentPhase === 'inhale') startInhale();
+        else startExhale();
+      } else {
+        startBreathing();
+      }
+    }
+  });
+
+  btnReset.addEventListener('click', () => {
+    isRunning = false;
+    clearInterval(phaseTimer);
+    clearInterval(countdownTimer);
+    elapsedSeconds = 0;
+    breathCount = 0;
+    circle.className = 'circle-main';
+    phaseText.textContent = 'Tilbúin/n?';
+    phaseCount.textContent = '—';
+    phaseUnit.textContent = '';
+    btnStart.textContent = 'Byrja';
+    doneBanner.classList.remove('visible');
+    sessionStats.classList.remove('visible');
+    resetTimer();
+  });
+
+  // Init
+  updateInfoDisplay();
+  resetTimer();
+</script>
+</body>
+</html>

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resonance Tíðni Reiknivél — HRV Biofeedback</title>
+<style>
+  :root {
+    --bg: #0f1f35;
+    --surface: #1e3456;
+    --surface2: #243f6a;
+    --surface3: #2d4f7e;
+    --border: #2d4a72;
+    --text: #e8f4fd;
+    --text-muted: #8ab4d4;
+    --accent: #63d0ff;
+    --teal: #38b2ac;
+    --teal-light: #81e6d9;
+    --green: #48bb78;
+    --yellow: #f6e05e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  header { text-align: center; margin-bottom: 32px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+  header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+  /* ---- TABS ---- */
+  .tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 12px; padding: 4px; margin-bottom: 24px; }
+  .tab { flex: 1; padding: 10px; text-align: center; border-radius: 9px; border: none; background: transparent; color: var(--text-muted); font-size: 0.88rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  .tab:hover { background: var(--surface2); color: var(--text); }
+  .tab.active { background: var(--surface2); color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.visible { display: block; }
+
+  /* ---- CARDS ---- */
+  .card { background: var(--surface); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+  .card h2 { font-size: 1rem; color: var(--accent); margin-bottom: 6px; }
+  .card .desc { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5; }
+
+  /* ---- SLIDER CALC ---- */
+  .big-slider-wrap { margin-bottom: 24px; }
+
+  .slider-value-row {
+    display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 8px;
+  }
+
+  .slider-big-num { font-size: 4rem; font-weight: 700; color: var(--accent); line-height: 1; }
+  .slider-big-unit { font-size: 1.2rem; color: var(--text-muted); }
+
+  input[type="range"].big-slider {
+    width: 100%;
+    accent-color: var(--teal);
+    height: 6px;
+    cursor: pointer;
+    margin-bottom: 6px;
+  }
+
+  .slider-tick-labels {
+    display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);
+  }
+
+  .result-box {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .res-item .r-num { font-size: 2.2rem; font-weight: 700; }
+  .res-item .r-lbl { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+  .res-item.inhale .r-num { color: #4fc3f7; }
+  .res-item.exhale .r-num { color: #38b2ac; }
+  .res-item.cycle .r-num { color: var(--yellow); }
+
+  .breath-visual {
+    display: flex; align-items: center; gap: 0; margin-bottom: 20px; border-radius: 8px; overflow: hidden; height: 28px;
+  }
+
+  .bv-inhale {
+    background: linear-gradient(90deg, #1a6fa3, #4fc3f7);
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; color: #fff; font-weight: 600;
+    transition: flex 0.4s ease;
+  }
+
+  .bv-exhale {
+    background: linear-gradient(90deg, #38b2ac, #1a7a74);
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; color: #fff; font-weight: 600;
+    transition: flex 0.4s ease;
+  }
+
+  .tip-box {
+    background: linear-gradient(135deg, rgba(56,178,172,0.1), rgba(99,208,255,0.08));
+    border: 1px solid rgba(56,178,172,0.25);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .tip-box strong { color: var(--teal-light); }
+
+  /* ---- FULL TABLE ---- */
+  .freq-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .freq-table th {
+    text-align: left; padding: 10px 12px; color: var(--text-muted); font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.07em; border-bottom: 1px solid var(--border);
+  }
+  .freq-table td { padding: 10px 12px; border-bottom: 1px solid rgba(45,74,114,0.35); }
+  .freq-table tr.highlight { background: rgba(99,208,255,0.07); }
+  .freq-table tr.highlight td { color: var(--accent); font-weight: 600; }
+  .freq-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge-common {
+    display: inline-block; background: rgba(72,187,120,0.2); color: #48bb78;
+    border-radius: 20px; padding: 1px 8px; font-size: 0.7rem; font-weight: 600; margin-left: 6px;
+  }
+
+  /* ---- PROTOCOL ---- */
+  .step {
+    display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px;
+  }
+  .step-num {
+    min-width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface2); border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: var(--accent); font-size: 0.95rem; flex-shrink: 0;
+  }
+  .step-body h4 { font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
+  .step-body p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+  .step-body .example {
+    background: var(--surface2); border-radius: 8px; padding: 10px 12px;
+    font-size: 0.82rem; color: var(--teal-light); margin-top: 8px; font-style: italic;
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ---- CUSTOM INPUT ---- */
+  .input-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px; }
+  .input-group { flex: 1; min-width: 100px; }
+  .input-group label { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .input-group input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 12px; font-size: 1.1rem; font-weight: 600;
+    text-align: center; outline: none; transition: border-color 0.2s;
+  }
+  .input-group input:focus { border-color: var(--accent); }
+
+  .btn-calc {
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: #fff; border: none; border-radius: 10px; padding: 11px 24px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .btn-calc:hover { opacity: 0.9; }
+
+  .custom-result {
+    background: var(--surface2); border-radius: 12px; padding: 18px;
+    display: none; text-align: center;
+  }
+  .custom-result.visible { display: block; }
+  .custom-result .cr-main { font-size: 1.5rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .custom-result .cr-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+  footer { margin-top: 32px; text-align: center; font-size: 0.75rem; color: var(--text-muted); opacity: 0.5; }
+
+  @media (max-width: 480px) {
+    .result-box { grid-template-columns: 1fr 1fr; }
+    .res-item.cycle { grid-column: span 2; }
+    .tabs { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Resonance Tíðni Reiknivél</h1>
+  <p>Finndu persónulegu öndunarröttinn þinn fyrir HRV biofeedback þjálfun — hversu lengi á innöndun og útöndun að vera?</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPanel('reiknivelir')">Reiknivél</button>
+  <button class="tab" onclick="showPanel('tafla')">Tíðnitafla</button>
+  <button class="tab" onclick="showPanel('profokulur')">Hvernig finn ég mína tíðni?</button>
+  <button class="tab" onclick="showPanel('custom')">Sérsniðið</button>
+</div>
+
+<!-- ========== REIKNIVÉL ========== -->
+<div id="panel-reiknivelir" class="panel visible">
+  <div class="card">
+    <h2>Veldu andardráttartíðni</h2>
+    <p class="desc">Færðu sleðann til að finna innöndunartíma, útöndunartíma og heildarlengd andardráttar.
+    Algengasta resonance tíðnin er 6 bpm — en þetta er persónulegt.</p>
+
+    <div class="big-slider-wrap">
+      <div class="slider-value-row">
+        <span class="slider-big-num" id="bpmDisplay">6.0</span>
+        <span class="slider-big-unit">bpm</span>
+      </div>
+      <input type="range" class="big-slider" id="bpmSlider" min="4" max="8" step="0.1" value="6.0"
+        oninput="updateCalc()">
+      <div class="slider-tick-labels">
+        <span>4 bpm</span><span>5</span><span>6</span><span>7</span><span>8 bpm</span>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="res-item inhale">
+        <div class="r-num" id="inSec">4.0</div>
+        <div class="r-lbl">sek innöndun</div>
+      </div>
+      <div class="res-item exhale">
+        <div class="r-num" id="outSec">6.0</div>
+        <div class="r-lbl">sek útöndun</div>
+      </div>
+      <div class="res-item cycle">
+        <div class="r-num" id="cycleSec">10.0</div>
+        <div class="r-lbl">sek heildarlota</div>
+      </div>
+    </div>
+
+    <div class="breath-visual">
+      <div class="bv-inhale" id="bvInhale" style="flex:4">Inn: 4.0s</div>
+      <div class="bv-exhale" id="bvExhale" style="flex:6">Út: 6.0s</div>
+    </div>
+
+    <div class="tip-box" id="tipBox">
+      <strong>6 bpm</strong> er algengasta resonance tíðnin og upphafspunktur í þjálfun.
+      Prófaðu nokkrar lotir á þessari tíðni og athugaðu hvernig þér líður — aukin slökun og hljóður hjartsláttur eru góð merki.
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAFLA ========== -->
+<div id="panel-tafla" class="panel">
+  <div class="card">
+    <h2>Resonance tíðnitafla</h2>
+    <p class="desc">Innöndunartími er 40% og útöndunartími 60% af heildarlotan — hlutfall sem hámarkar HRV sveiflur við resonance tíðni. Byggt á rannsóknarprótókólnum (Lehrer & Gevirtz, 2014).</p>
+
+    <table class="freq-table" id="freqTable">
+      <thead>
+        <tr>
+          <th>Tíðni (bpm)</th>
+          <th>Heildarlota (sek)</th>
+          <th>Innöndun (sek)</th>
+          <th>Útöndun (sek)</th>
+          <th>Andardráttar á 20 mín</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== PRÓFÓKÚLAR ========== -->
+<div id="panel-profokulur" class="panel">
+  <div class="card">
+    <h2>Hvernig finn ég resonance tíðni mína?</h2>
+    <p class="desc">Resonance tíðni er persónubundin — flestir eru á bilinu 5.5–6.5 bpm, en sumir eru hærra eða lægra. Hér er skref-fyrir-skref leiðbeining til að finna þína.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Búðu þér til HRV mælingarumhverfi</h4>
+        <p>Notaðu hjartasláttarskynjar (t.d. Polar H10) og app (t.d. EliteHRV, HRV4Training eða iThlete). Settu þig í rólega stöðu, 5 mínútur hvíld án þess að tala eða hreyfa þig.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Prófaðu 7 bpm fyrst (3 mínútur)</h4>
+        <p>Byrjaðu á hærri tíðni. Andaðu inn í 3.4 sek og út í 5.2 sek. Fylgstu með HRV tölunni eða hjartasláttarsveiflunni í appinu.</p>
+        <div class="example">Inn: 3.4 sek · Út: 5.2 sek · 7 andardráttar/mín</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Farðu niður um 0.5 bpm í einu</h4>
+        <p>Eftir 3 mínútur á hverri tíðni ferðu niður í næstu: 6.5 → 6.0 → 5.5 → 5.0 bpm. Gefðu þér 30 sek hvíld á milli.</p>
+        <div class="example">7.0 → 6.5 → 6.0 → 5.5 → 5.0 bpm</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Finndu toppinn</h4>
+        <p>Resonance tíðnin þín er þar sem HRV er hæst — þ.e. þar sem RMSSD-talan eða HF Power er mest. Sumt folk finnur þetta sjónamlega í appinu sem stórust sveiflur hjartasláttar.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Staðfestu með tveimur lotum</h4>
+        <p>Eftir að þú hefur fundið mögulegu tíðnina þína, prófaðu hana aftur daginn eftir eða tveimur dögum síðar. Ef HRV er aftur hæst þar þá er þetta tíðni þín.</p>
+        <div class="example">Dæmi: Anna fann að HRV var hæst við 6.5 bpm. Prófaði aftur tveimur dögum síðar — sömu niðurstöður. Tíðni: 6.5 bpm.</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="tip-box">
+      <strong>Mikilvægt:</strong> Ef þú hefur ekki aðgang að HRV mæli þá er <strong>6 bpm góður upphafspunktur</strong> fyrir flesta.
+      Rannsóknin okkar sýndi að meðal resonance tíðni þátttakenda var ~0.085 Hz (~5.1 bpm) og flestar dreifðust
+      á bilinu 5–7 bpm. Byrjaðu á 6 bpm og aðlagaðu ef þörf er á.
+    </div>
+  </div>
+</div>
+
+<!-- ========== SÉRSNIÐIÐ ========== -->
+<div id="panel-custom" class="panel">
+  <div class="card">
+    <h2>Reiknaðu út frá þinni tíðni</h2>
+    <p class="desc">Sláðu inn þína persónulegu resonance tíðni (eða prófaðu mismunandi gildi) til að fá nákvæmar inn/útöndunartölur.</p>
+
+    <div class="input-row">
+      <div class="input-group">
+        <label>Andardráttartíðni</label>
+        <input type="number" id="customBpm" min="3" max="10" step="0.1" value="6" placeholder="6.0">
+      </div>
+      <div class="input-group">
+        <label>Innöndun/útöndun hlutfall</label>
+        <input type="number" id="customRatio" min="0.3" max="0.6" step="0.05" value="0.4" placeholder="0.4">
+      </div>
+      <button class="btn-calc" onclick="calcCustom()">Reikna</button>
+    </div>
+
+    <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:16px;">Hlutfall 0.4 þýðir 40% innöndun / 60% útöndun (staðlað). Prófaðu 0.5 fyrir jafnt hlutfall (4:6 → 5:5).</p>
+
+    <div class="custom-result" id="customResult">
+      <div class="cr-main" id="crMain"></div>
+      <div class="cr-sub" id="crSub"></div>
+    </div>
+
+    <hr class="divider">
+
+    <h2 style="margin-bottom:12px">Setja inn í EliteHRV app</h2>
+    <p class="desc">EliteHRV krefst þess að þú setjir inn innöndunartíma og útöndunartíma í sekúndum. Hér er samantekt:</p>
+
+    <table class="freq-table">
+      <thead>
+        <tr><th>Tíðni</th><th>EliteHRV: Inhale (sek)</th><th>EliteHRV: Exhale (sek)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>5 bpm</td><td>4.8</td><td>7.2</td></tr>
+        <tr><td>5.5 bpm</td><td>4.4</td><td>6.6</td></tr>
+        <tr class="highlight"><td>6 bpm ⭐ algengust</td><td>4.0</td><td>6.0</td></tr>
+        <tr><td>6.5 bpm</td><td>3.7</td><td>5.5</td></tr>
+        <tr><td>7 bpm</td><td>3.4</td><td>5.2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>Byggt á HRV biofeedback rannsókn · Lehrer & Gevirtz (2014)</footer>
+
+<script>
+  // ---- TAB NAV ----
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('visible');
+    event.target.classList.add('active');
+    if (name === 'tafla') buildTable();
+  }
+
+  // ---- MAIN CALCULATOR ----
+  const RATIO_IN = 0.4;  // 40% inhale
+  const RATIO_OUT = 0.6; // 60% exhale
+
+  const tips = {
+    4:   'Mjög lág tíðni — 4 bpm hentar sumt fólki en er sjaldgæf. Prófaðu aðeins ef gögn benda til þess.',
+    4.5: 'Lág tíðni. Sumt fólk finnur resonance hér. Vertu meðvituð/ur um að útöndunin er mjög löng (8.1 sek).',
+    5:   'Lægri hlið resonance sviðsins. Hentar þeim sem hafa náttúrulega hæga öndun eða lágar hjartasláttstölu.',
+    5.5: 'Tíðni sem hentar mörgum. Góður valkostur ef 6 bpm þykir of hröð.',
+    6:   '<strong>6 bpm</strong> er algengasta resonance tíðnin — upphafspunktur í flestum rannsóknum og þjálfunarforritum.',
+    6.5: 'Aðeins hærri tíðni. Hentar þeim sem hafa náttúrulega hraðari öndun eða upplifa 6 bpm of hæga.',
+    7:   '<strong>7 bpm</strong> — hærri hlið resonance sviðsins. Rannsóknin okkar sýndi nokkra þátttakendur með resonance tíðni nálægt þessu.',
+    7.5: 'Nær efri mörkum resonance sviðsins. Æskilegt að staðfesta með HRV mælingu.',
+    8:   'Yfir hefðbundnu resonance sviði (<0.15 Hz). Þetta er fremur venjuleg öndun en resonance þjálfun.',
+  };
+
+  function updateCalc() {
+    const bpm = parseFloat(document.getElementById('bpmSlider').value);
+    const cycle = 60 / bpm;
+    const inS = (cycle * RATIO_IN).toFixed(1);
+    const outS = (cycle * RATIO_OUT).toFixed(1);
+
+    document.getElementById('bpmDisplay').textContent = bpm.toFixed(1);
+    document.getElementById('inSec').textContent = inS;
+    document.getElementById('outSec').textContent = outS;
+    document.getElementById('cycleSec').textContent = cycle.toFixed(1);
+
+    document.getElementById('bvInhale').style.flex = inS;
+    document.getElementById('bvInhale').textContent = `Inn: ${inS}s`;
+    document.getElementById('bvExhale').style.flex = outS;
+    document.getElementById('bvExhale').textContent = `Út: ${outS}s`;
+
+    const rounded = Math.round(bpm * 2) / 2;
+    const tip = tips[rounded] || tips[Math.round(bpm)] || '';
+    document.getElementById('tipBox').innerHTML = tip;
+
+    // highlight table if visible
+    highlightTableRow(bpm);
+  }
+
+  // ---- TABLE ----
+  const TABLE_DATA = [
+    { bpm: 4,   inS: 6.0,  outS: 9.0  },
+    { bpm: 4.5, inS: 5.3,  outS: 8.0  },
+    { bpm: 5,   inS: 4.8,  outS: 7.2  },
+    { bpm: 5.5, inS: 4.4,  outS: 6.6  },
+    { bpm: 6,   inS: 4.0,  outS: 6.0  },
+    { bpm: 6.5, inS: 3.7,  outS: 5.5  },
+    { bpm: 7,   inS: 3.4,  outS: 5.2  },
+    { bpm: 7.5, inS: 3.2,  outS: 4.8  },
+    { bpm: 8,   inS: 3.0,  outS: 4.5  },
+  ];
+
+  function buildTable() {
+    const tbody = document.getElementById('tableBody');
+    if (tbody.innerHTML) return;
+    tbody.innerHTML = TABLE_DATA.map(r => {
+      const cycle = 60 / r.bpm;
+      const perSes = Math.round(20 / (cycle / 60));
+      const isCommon = r.bpm >= 5.5 && r.bpm <= 6.5;
+      return `<tr ${r.bpm === 6 ? 'class="highlight"' : ''}>
+        <td>${r.bpm} bpm${isCommon ? '<span class="badge-common">algeng</span>' : ''}${r.bpm === 6 ? ' ⭐' : ''}</td>
+        <td>${cycle.toFixed(1)} sek</td>
+        <td>${r.inS} sek</td>
+        <td>${r.outS} sek</td>
+        <td>~${perSes}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function highlightTableRow(bpm) {
+    // live update from slider
+  }
+
+  // ---- CUSTOM CALC ----
+  function calcCustom() {
+    const bpm = parseFloat(document.getElementById('customBpm').value);
+    const ratio = parseFloat(document.getElementById('customRatio').value);
+    if (isNaN(bpm) || bpm <= 0 || isNaN(ratio) || ratio <= 0 || ratio >= 1) {
+      alert('Sláðu inn gild gildi. Tíðni: 3-10 bpm, hlutfall: 0.3-0.6'); return;
+    }
+    const cycle = 60 / bpm;
+    const inS = (cycle * ratio).toFixed(2);
+    const outS = (cycle * (1 - ratio)).toFixed(2);
+    const perSes = Math.round(20 / (cycle / 60));
+
+    const res = document.getElementById('customResult');
+    res.classList.add('visible');
+    document.getElementById('crMain').textContent = `Inn: ${inS} sek · Út: ${outS} sek`;
+    document.getElementById('crSub').innerHTML =
+      `Heildarlota: ${cycle.toFixed(2)} sek &nbsp;|&nbsp; ${bpm} bpm &nbsp;|&nbsp; ~${perSes} andardráttar á 20 mín<br>
+       <span style="color:var(--teal-light)">EliteHRV: Inhale = ${inS} · Exhale = ${outS}</span>`;
+  }
+
+  // Init
+  updateCalc();
+</script>
+</body>
+</html>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<script>
+  if (!sessionStorage.getItem("hrv_auth")) { window.location.href = "index.html"; }
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Toolkit — Frá fyrirlestri</title>
+<style>
+  :root {
+    --bg: #0b1829;
+    --surface: #1a3050;
+    --surface2: #1e3a5f;
+    --border: #254a7a;
+    --text: #e8f4fd;
+    --text-muted: #7aaccf;
+    --accent: #4fc3f7;
+    --teal: #38b2ac;
+    --teal-light: #81e6d9;
+    --green: #48bb78;
+    --yellow: #f6e05e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ---- HERO ---- */
+  .hero {
+    background: linear-gradient(160deg, #0f2540 0%, #1a3d6b 50%, #0e2a4a 100%);
+    padding: 48px 24px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(79,195,247,0.08) 0%, transparent 70%);
+    top: -100px; left: 50%; transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(56,178,172,0.15);
+    border: 1px solid rgba(56,178,172,0.3);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    color: var(--teal-light);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    font-size: 1rem;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin: 0 auto 24px;
+    line-height: 1.6;
+  }
+
+  .hero-presenter {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .presenter-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ---- MAIN ---- */
+  main { padding: 32px 16px 64px; max-width: 860px; margin: 0 auto; }
+
+  /* ---- QUICK FACTS ---- */
+  .facts-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .fact-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border-top: 2px solid var(--border);
+  }
+
+  .fact-card .f-num { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .fact-card .f-lbl { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+
+  /* ---- SECTION TITLES ---- */
+  .sec-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sec-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ---- TOOLS GRID ---- */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .tool-card {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 22px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .tool-card:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(79,195,247,0.1);
+  }
+
+  .tool-icon {
+    font-size: 2rem;
+    width: 52px; height: 52px;
+    background: var(--surface2);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .tool-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); }
+  .tool-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; flex: 1; }
+
+  .tool-tag {
+    display: inline-block;
+    background: rgba(79,195,247,0.1);
+    color: var(--accent);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    width: fit-content;
+  }
+
+  .tool-tag.green { background: rgba(72,187,120,0.1); color: var(--green); }
+  .tool-tag.yellow { background: rgba(246,224,94,0.1); color: var(--yellow); }
+  .tool-tag.teal { background: rgba(56,178,172,0.1); color: var(--teal-light); }
+
+  /* ---- INLINE BREATHING TOOL ---- */
+  .breathing-embed {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 40px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .breathing-embed h3 { font-size: 1rem; color: var(--accent); margin-bottom: 6px; }
+  .breathing-embed p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 24px; }
+
+  .circle-wrap {
+    position: relative;
+    width: 180px; height: 180px;
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .breath-ring {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(79,195,247,0.15);
+  }
+
+  .breath-circle {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4fc3f7, #1a6fa3);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(79,195,247,0.25);
+    transition: transform 0.3s;
+  }
+
+  .bc-phase { font-size: 0.82rem; font-weight: 600; color: #fff; }
+  .bc-count { font-size: 2rem; font-weight: 700; color: #fff; line-height: 1; }
+
+  .breath-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+
+  .bpm-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); border-radius: 8px; padding: 6px 14px;
+    font-size: 0.82rem; cursor: pointer; transition: all 0.15s;
+  }
+  .bpm-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(79,195,247,0.08); }
+  .bpm-btn:hover { background: var(--surface); color: var(--text); }
+
+  .dur-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+
+  .btn-start-embed {
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: #fff; border: none; border-radius: 10px;
+    padding: 12px 36px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s; width: 100%; max-width: 280px;
+  }
+  .btn-start-embed:hover { opacity: 0.9; }
+
+  .timer-txt { font-size: 1.6rem; font-weight: 300; color: var(--accent); margin-top: 12px; letter-spacing: 0.05em; }
+  .timer-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+  .prog-bg { width: 100%; max-width: 280px; height: 3px; background: var(--surface2); border-radius: 2px; margin: 10px auto 0; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--accent)); width: 0%; transition: width 1s linear; }
+
+  /* ---- INFO HLUTI ---- */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+
+  .info-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 20px;
+    border-left: 3px solid var(--teal);
+  }
+
+  .info-card h4 { font-size: 0.9rem; font-weight: 600; color: var(--teal-light); margin-bottom: 8px; }
+  .info-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
+  .freq-table-mini {
+    width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 8px;
+  }
+  .freq-table-mini td, .freq-table-mini th {
+    padding: 6px 10px; border-bottom: 1px solid rgba(45,74,114,0.4);
+  }
+  .freq-table-mini th { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; }
+  .freq-table-mini tr.hl td { color: var(--accent); font-weight: 600; }
+
+  /* ---- CONTACT ---- */
+  .contact-card {
+    background: linear-gradient(135deg, var(--surface2), rgba(56,178,172,0.08));
+    border: 1px solid var(--teal);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .contact-card h3 { font-size: 1.1rem; color: var(--teal-light); margin-bottom: 8px; }
+  .contact-card p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+
+  .contact-links { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .contact-link {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 20px; font-size: 0.85rem;
+    color: var(--text-muted); text-decoration: none; transition: all 0.15s;
+  }
+  .contact-link:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+  /* ---- TIPS STRIP ---- */
+  .tip-strip {
+    background: rgba(246,224,94,0.06);
+    border: 1px solid rgba(246,224,94,0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 40px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .tip-strip strong { color: var(--yellow); }
+
+  footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    opacity: 0.4;
+    padding-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    .hero { padding: 36px 16px 32px; }
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">HRV Biofeedback · Toolkit</div>
+  <h1>Þjálfaðu <span>taugakerfið þitt</span></h1>
+  <p>Verkfæri, dagbók og fræðsla sem fylgdu fyrirlestrinum — allt hér, í vafra, ókeypis.</p>
+  <div class="hero-presenter">
+    <div class="presenter-dot"></div>
+    <span>Byggt á doktorrannsókn · Sigrún Þóra</span>
+  </div>
+</div>
+
+<main>
+
+  <!-- FACTS -->
+  <div class="facts-row">
+    <div class="fact-card">
+      <div class="f-num" style="color:#4fc3f7">20</div>
+      <div class="f-lbl">mínútur á dag — lágmark sem virkar</div>
+    </div>
+    <div class="fact-card">
+      <div class="f-num" style="color:#38b2ac">6</div>
+      <div class="f-lbl">andardráttar á mínútu — resonance tíðni</div>
+    </div>
+    <div class="fact-card">
+      <div class="f-num" style="color:#f6e05e">26</div>
+      <div class="f-lbl">lögregluþjónar í rannsókninni</div>
+    </div>
+    <div class="fact-card">
+      <div class="f-num" style="color:#48bb78">5</div>
+      <div class="f-lbl">vikur — þar sem marktæk breyting sást</div>
+    </div>
+  </div>
+
+  <!-- BREATHING EMBED -->
+  <div class="sec-title">Byrjaðu hér — Resonance öndun</div>
+
+  <div class="breathing-embed">
+    <h3>Öndunarverkfærið</h3>
+    <p>Veldu tíðni og tíma — og byrjaðu. Engin skráning. Virkar í vafra.</p>
+
+    <!-- BPM val -->
+    <div class="breath-controls" id="bpmBtns">
+      <button class="bpm-btn" data-bpm="5" data-in="4.8" data-out="7.2">5 bpm</button>
+      <button class="bpm-btn" data-bpm="5.5" data-in="4.4" data-out="6.6">5.5 bpm</button>
+      <button class="bpm-btn active" data-bpm="6" data-in="4.0" data-out="6.0">6 bpm ⭐</button>
+      <button class="bpm-btn" data-bpm="6.5" data-in="3.7" data-out="5.5">6.5 bpm</button>
+      <button class="bpm-btn" data-bpm="7" data-in="3.4" data-out="5.2">7 bpm</button>
+    </div>
+
+    <!-- Duration -->
+    <div class="dur-btns" id="durBtns">
+      <button class="bpm-btn" data-min="5">5 mín</button>
+      <button class="bpm-btn active" data-min="10">10 mín</button>
+      <button class="bpm-btn" data-min="20">20 mín</button>
+    </div>
+
+    <!-- Circle -->
+    <div class="circle-wrap">
+      <div class="breath-ring"></div>
+      <div class="breath-circle" id="bc">
+        <div class="bc-phase" id="bcPhase">Tilbúin/n?</div>
+        <div class="bc-count" id="bcCount">—</div>
+      </div>
+    </div>
+
+    <div class="timer-txt" id="timerTxt">10:00</div>
+    <div class="timer-sub" id="timerSub">veldu tíma og byrjaðu</div>
+
+    <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+
+    <br>
+    <button class="btn-start-embed" id="btnStart" onclick="toggleBreath()">Byrja</button>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="sec-title">Verkfærin þín</div>
+
+  <div class="tools-grid">
+    <div class="tool-card" onclick="openTool('verkfaeri_dagbok.html')">
+      <div class="tool-icon">📓</div>
+      <h3>5 vikna þjálfunardagbók</h3>
+      <p>Skráðu æfingar, líðan, streitu og einbeitingu á hverjum degi. Sjálfvirk línurit sýna þróunina þína.</p>
+      <span class="tool-tag green">Dagleg notkun</span>
+    </div>
+
+    <div class="tool-card" onclick="openTool('verkfaeri_resonance_reiknivelir.html')">
+      <div class="tool-icon">🧮</div>
+      <h3>Resonance tíðni reiknivél</h3>
+      <p>Finndu nákvæmlega hversu margar sekúndur innöndun og útöndun eiga að vera við þína persónulegu tíðni.</p>
+      <span class="tool-tag yellow">Einu sinni / til uppflettingar</span>
+    </div>
+
+    <div class="tool-card" onclick="openTool('verkfaeri_grunnlina_mat.html')">
+      <div class="tool-icon">📊</div>
+      <h3>Grunnlínu mat</h3>
+      <p>15 spurningar um streitu, svefn og einbeitingu. Gefur þér persónulegar niðurstöður og ráðleggingar.</p>
+      <span class="tool-tag teal">Gerðu núna · 5 mín</span>
+    </div>
+
+    <div class="tool-card" onclick="openTool('verkfaeri_ondun.html')">
+      <div class="tool-icon">🌬️</div>
+      <h3>Öndunarverkfæri — fullur útgáfan</h3>
+      <p>Stærri útgáfa með tímagildum, framvindustiku og lokamelding. Hentar til formlegri æfinga.</p>
+      <span class="tool-tag">Æfingalota</span>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="sec-title">Fræðsla — helstu hugmyndir</div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <h4>Hvað er HRV?</h4>
+      <p>Heart Rate Variability — breytileiki í tíma milli hjartslætta. Há HRV þýðir sveigjanlegra taugakerfi og betri hæfni til að jafna sig frá streitu.</p>
+    </div>
+    <div class="info-card" style="border-color:#4fc3f7">
+      <h4>Sympatískt vs. Parasympatískt</h4>
+      <p><strong style="color:#fc8181">Sympatískt</strong> — fight or flight. Kveikir undir álagi.<br>
+      <strong style="color:#81e6d9">Parasympatískt</strong> — rest & digest. Vagus-tauginn. Jafnar og endurnýjar.</p>
+    </div>
+    <div class="info-card" style="border-color:#f6e05e">
+      <h4>Baroreflex og resonance</h4>
+      <p>Við ~6 bpm fer hjartasláttur, blóðþrýstingur og öndun í samhljóm. Þetta þjálfar baroreflex — sjálfvirka stjórnunarkerfið. Þetta er þjálfun, ekki slökun.</p>
+    </div>
+    <div class="info-card" style="border-color:#48bb78">
+      <h4>Hið minnsta sem virkar</h4>
+      <p>Ein 20 mínútna æfing á dag. Sömu tíðni. Dagbók í 2 mínútur. Samkvæmni yfir 4–6 vikur er mikilvægari en lengd einstakra lota.</p>
+    </div>
+  </div>
+
+  <!-- RESONANCE TABLE -->
+  <div class="sec-title">Öndunarttíðni — flettitafla</div>
+
+  <div class="info-card" style="border-color:var(--accent); margin-bottom:40px">
+    <h4>Inn / útöndunartímar eftir tíðni</h4>
+    <table class="freq-table-mini">
+      <tr><th>Tíðni</th><th>Inn (sek)</th><th>Út (sek)</th><th>EliteHRV</th></tr>
+      <tr><td>5 bpm</td><td>4.8</td><td>7.2</td><td>4.8 / 7.2</td></tr>
+      <tr><td>5.5 bpm</td><td>4.4</td><td>6.6</td><td>4.4 / 6.6</td></tr>
+      <tr class="hl"><td>6 bpm ⭐</td><td>4.0</td><td>6.0</td><td>4.0 / 6.0</td></tr>
+      <tr><td>6.5 bpm</td><td>3.7</td><td>5.5</td><td>3.7 / 5.5</td></tr>
+      <tr><td>7 bpm</td><td>3.4</td><td>5.2</td><td>3.4 / 5.2</td></tr>
+    </table>
+  </div>
+
+  <!-- TIP -->
+  <div class="tip-strip">
+    <strong>Ráð til að halda sér við æfingarnar:</strong> Settu verkfærið í bookmark núna. Gerðu fyrstu æfinguna á morgun — áður en tölvan opnast. Þegar þú hefur gert þetta 7 daga í röð er það orðið venja.
+  </div>
+
+  <!-- CONTACT -->
+  <div class="contact-card">
+    <h3>Spurningar eða áhugi á að fara lengra?</h3>
+    <p>Ég bjóð upp á 4 vikna HRV biofeedback þjálfunarforrit, mini námskeið og einstaklings ráðgjöf. Hafðu samband — ég svar öllum.</p>
+    <div class="contact-links">
+      <a href="mailto:" class="contact-link">📧 Senda tölvupóst</a>
+      <a href="#" class="contact-link">🌐 Vefurinn minn</a>
+      <a href="#" class="contact-link">💼 LinkedIn</a>
+    </div>
+  </div>
+
+</main>
+
+<footer>Sigrún Þóra · HRV Biofeedback Rannsókn · Öll verkfæri eru ókeypis og geyma engin gögn á netinu</footer>
+
+<script>
+// ---- TOOL OPENER ----
+function openTool(file) {
+  // Opens other tool files — adjust path if hosting online
+  const path = file;
+  window.open(path, '_blank');
+}
+
+// ---- BREATHING ENGINE ----
+let bpm = 6, inS = 4.0, outS = 6.0, dur = 10;
+let running = false, elapsed = 0, totalS = 600;
+let phaseTimer = null, countdownTimer = null, phase = 'idle';
+let phaseLeft = 0;
+
+document.getElementById('bpmBtns').addEventListener('click', e => {
+  const btn = e.target.closest('.bpm-btn');
+  if (!btn || running) return;
+  document.querySelectorAll('#bpmBtns .bpm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  bpm = parseFloat(btn.dataset.bpm);
+  inS = parseFloat(btn.dataset.in);
+  outS = parseFloat(btn.dataset.out);
+  if (!running) resetDisp();
+});
+
+document.getElementById('durBtns').addEventListener('click', e => {
+  const btn = e.target.closest('.bpm-btn');
+  if (!btn || running) return;
+  document.querySelectorAll('#durBtns .bpm-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  dur = parseInt(btn.dataset.min);
+  totalS = dur * 60;
+  resetDisp();
+});
+
+function resetDisp() {
+  document.getElementById('timerTxt').textContent = fmt(totalS);
+  document.getElementById('timerSub').textContent = 'veldu tíma og byrjaðu';
+  document.getElementById('progFill').style.width = '0%';
+  document.getElementById('bcPhase').textContent = 'Tilbúin/n?';
+  document.getElementById('bcCount').textContent = '—';
+  document.getElementById('bc').style.transform = 'scale(1)';
+  document.getElementById('btnStart').textContent = 'Byrja';
+}
+
+function fmt(s) {
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+
+function toggleBreath() {
+  if (running) {
+    running = false;
+    clearInterval(phaseTimer);
+    clearInterval(countdownTimer);
+    document.getElementById('bcPhase').textContent = 'Hlé';
+    document.getElementById('bcCount').textContent = '';
+    document.getElementById('bc').style.transform = 'scale(1)';
+    document.getElementById('btnStart').textContent = 'Halda áfram';
+  } else {
+    if (elapsed === 0) { totalS = dur * 60; elapsed = 0; }
+    running = true;
+    document.getElementById('btnStart').textContent = 'Hlé';
+    startCountdown();
+    doInhale();
+  }
+}
+
+function startCountdown() {
+  countdownTimer = setInterval(() => {
+    elapsed++;
+    const rem = totalS - elapsed;
+    document.getElementById('timerTxt').textContent = fmt(Math.max(0, rem));
+    document.getElementById('progFill').style.width = (elapsed/totalS*100) + '%';
+    document.getElementById('timerSub').textContent = 'eftir af æfingunni';
+    if (elapsed >= totalS) { endSession(); }
+  }, 1000);
+}
+
+function doInhale() {
+  if (!running) return;
+  phase = 'inhale';
+  document.getElementById('bcPhase').textContent = 'Andaðu inn';
+  document.getElementById('bc').style.background = 'radial-gradient(circle at 35% 35%, #63d0ff, #2d7ab5)';
+  document.getElementById('bc').style.boxShadow = '0 0 60px rgba(99,208,255,0.4)';
+
+  const steps = Math.round(inS);
+  let step = 0;
+  document.getElementById('bcCount').textContent = steps;
+
+  const scaleTarget = 1.25;
+  document.getElementById('bc').style.transition = `transform ${inS}s ease-in-out`;
+  document.getElementById('bc').style.transform = `scale(${scaleTarget})`;
+
+  clearInterval(phaseTimer);
+  phaseTimer = setInterval(() => {
+    step++;
+    document.getElementById('bcCount').textContent = Math.max(0, steps - step) || '';
+    if (step >= steps) {
+      clearInterval(phaseTimer);
+      setTimeout(() => { if (running) doExhale(); }, (inS - steps) * 1000 + 50);
+    }
+  }, 1000);
+}
+
+function doExhale() {
+  if (!running) return;
+  phase = 'exhale';
+  document.getElementById('bcPhase').textContent = 'Andaðu út';
+  document.getElementById('bc').style.background = 'radial-gradient(circle at 35% 35%, #38b2ac, #1a6fa3)';
+  document.getElementById('bc').style.boxShadow = '0 0 30px rgba(56,178,172,0.25)';
+
+  const steps = Math.round(outS);
+  let step = 0;
+  document.getElementById('bcCount').textContent = steps;
+
+  document.getElementById('bc').style.transition = `transform ${outS}s ease-in-out`;
+  document.getElementById('bc').style.transform = 'scale(1)';
+
+  clearInterval(phaseTimer);
+  phaseTimer = setInterval(() => {
+    step++;
+    document.getElementById('bcCount').textContent = Math.max(0, steps - step) || '';
+    if (step >= steps) {
+      clearInterval(phaseTimer);
+      setTimeout(() => { if (running) doInhale(); }, (outS - steps) * 1000 + 50);
+    }
+  }, 1000);
+}
+
+function endSession() {
+  running = false;
+  clearInterval(phaseTimer);
+  clearInterval(countdownTimer);
+  elapsed = 0;
+  document.getElementById('bcPhase').textContent = 'Lokið! 🎉';
+  document.getElementById('bcCount').textContent = '';
+  document.getElementById('bc').style.transform = 'scale(1)';
+  document.getElementById('bc').style.background = 'radial-gradient(circle at 35% 35%, #48bb78, #1a6f3a)';
+  document.getElementById('btnStart').textContent = 'Gera aftur';
+  document.getElementById('timerSub').textContent = 'Skráðu þig í dagbókina ↑';
+}
+
+resetDisp();
+</script>
+</body>
+</html>

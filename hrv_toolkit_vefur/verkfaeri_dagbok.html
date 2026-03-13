@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Biofeedback Dagbók — 5 vikur</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1f35;
+    --surface: #1e3456;
+    --surface2: #243f6a;
+    --surface3: #2d4f7e;
+    --border: #2d4a72;
+    --text: #e8f4fd;
+    --text-muted: #8ab4d4;
+    --accent: #63d0ff;
+    --teal: #38b2ac;
+    --teal-light: #81e6d9;
+    --green: #48bb78;
+    --yellow: #f6e05e;
+    --orange: #ed8936;
+    --red: #fc8181;
+    --blue: #4fc3f7;
+    --week1: #2d5a8e;
+    --week2: #2d7a6e;
+    --week3: #4a6a2d;
+    --week4: #6a4a2d;
+    --week5: #6a2d5a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* ---- NAV ---- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .topbar p { color: var(--text-muted); font-size: 0.85rem; }
+
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 4px;
+    flex-wrap: wrap;
+  }
+
+  .nav-tab {
+    padding: 8px 16px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .nav-tab.active, .nav-tab:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .nav-tab.active { color: var(--accent); }
+
+  /* ---- SECTIONS ---- */
+  .section { display: none; }
+  .section.visible { display: block; }
+
+  /* ---- SETUP ---- */
+  .setup-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .setup-card h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
+
+  .field input[type="text"], .field input[type="date"], .field input[type="number"], .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover { background: var(--surface3); color: var(--text); }
+
+  /* ---- WEEK VIEW ---- */
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .week-nav { display: flex; align-items: center; gap: 12px; }
+  .week-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .week-nav button:hover { background: var(--surface2); }
+  .week-nav span { font-size: 1rem; font-weight: 600; color: var(--accent); min-width: 80px; text-align: center; }
+
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .day-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .day-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .day-card.today { border-color: var(--teal); }
+  .day-card.has-data { border-color: var(--green); }
+  .day-card.selected { border-color: var(--accent); background: var(--surface2); }
+
+  .day-card .day-num { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+  .day-card .day-date { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
+  .day-card .day-badges { display: flex; flex-direction: column; gap: 2px; }
+
+  .badge {
+    font-size: 0.7rem;
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .badge-done { background: rgba(72,187,120,0.2); color: var(--green); }
+  .badge-skip { background: rgba(252,129,129,0.15); color: var(--red); }
+  .badge-partial { background: rgba(246,224,94,0.15); color: var(--yellow); }
+
+  /* ---- ENTRY FORM ---- */
+  .entry-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .entry-card h3 { font-size: 1rem; color: var(--accent); margin-bottom: 16px; }
+
+  .exercises-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+  .exercise-block {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px;
+  }
+
+  .exercise-block h4 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+
+  .skip-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .skip-toggle input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--red); cursor: pointer; }
+
+  .min-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .min-input input[type="number"] {
+    width: 60px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-size: 0.95rem;
+    text-align: center;
+    outline: none;
+  }
+
+  .min-input span { font-size: 0.8rem; color: var(--text-muted); }
+
+  /* Rating sliders */
+  .ratings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .rating-item label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .rating-display {
+    font-size: 2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .slider-wrap input[type="range"] {
+    width: 100%;
+    accent-color: var(--teal);
+    height: 4px;
+    cursor: pointer;
+  }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .hrv-section {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .hrv-section h4 {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+
+  .hrv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  .hrv-grid input[type="number"] {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    outline: none;
+  }
+
+  .hrv-grid label { display: block; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+
+  textarea.notes {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px;
+    font-size: 0.88rem;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    margin-bottom: 14px;
+    font-family: inherit;
+  }
+
+  textarea.notes::placeholder { color: var(--text-muted); }
+
+  /* ---- OVERVIEW ---- */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-card .s-val { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat-card .s-lbl { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+  .chart-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card h3 { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
+
+  canvas { max-height: 200px; }
+
+  /* ---- TABLE ---- */
+  .table-wrap { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(45,74,114,0.4);
+    color: var(--text);
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .pill-green { background: rgba(72,187,120,0.2); color: var(--green); }
+  .pill-red { background: rgba(252,129,129,0.15); color: var(--red); }
+  .pill-yellow { background: rgba(246,224,94,0.15); color: var(--yellow); }
+
+  .export-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .export-btn:hover { background: var(--surface3); color: var(--text); }
+
+  .info-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    text-align: center;
+  }
+
+  .week-strip {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .week-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .week-btn.active { background: var(--blue-mid, #2d5a8e); border-color: var(--accent); color: var(--accent); }
+  .week-btn:hover { background: var(--surface2); color: var(--text); }
+
+  .color-lidan { color: #4fc3f7; }
+  .color-streita { color: #fc8181; }
+  .color-einbeiting { color: #81e6d9; }
+  .color-hrv { color: #f6e05e; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>HRV Biofeedback Dagbók</h1>
+    <p id="userHeader">5 vikna þjálfunarferli</p>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('dagbok')">Dagbók</button>
+    <button class="nav-tab" onclick="showSection('yfirlit')">Yfirlit</button>
+    <button class="nav-tab" onclick="showSection('tafla')">Tafla</button>
+    <button class="nav-tab" onclick="showSection('stillingar')">Stillingar</button>
+  </div>
+</div>
+
+<!-- ============ SETUP ============ -->
+<div id="sec-setup" class="section visible">
+  <div class="setup-card">
+    <h2>Velkomin/n í HRV dagbókina</h2>
+    <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:20px;">
+      Þessi dagbók fylgir þér í gegnum 5 vikna HRV biofeedback þjálfun. Skráðu nafn þitt og byrjunardagsetningu til að hefjast handa.
+    </p>
+    <div class="field">
+      <label>Nafn (eða gælunafn)</label>
+      <input type="text" id="setup-name" placeholder="t.d. Anna K." />
+    </div>
+    <div class="field">
+      <label>Resonance andardráttartíðni þín (bpm)</label>
+      <select id="setup-bpm">
+        <option value="5">5 bpm</option>
+        <option value="5.5">5.5 bpm</option>
+        <option value="6" selected>6 bpm (algengust)</option>
+        <option value="6.5">6.5 bpm</option>
+        <option value="7">7 bpm</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Byrjunardagsetning þjálfunar</label>
+      <input type="date" id="setup-startdate" />
+    </div>
+    <button class="btn-primary" onclick="saveSetup()">Hefja þjálfun</button>
+  </div>
+</div>
+
+<!-- ============ DAGBOK ============ -->
+<div id="sec-dagbok" class="section">
+
+  <div class="week-header">
+    <div class="week-nav">
+      <button onclick="changeWeek(-1)">◀</button>
+      <span id="weekLabel">Vika 1</span>
+      <button onclick="changeWeek(1)">▶</button>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-muted)" id="weekDates"></div>
+  </div>
+
+  <div class="days-grid" id="daysGrid"></div>
+
+  <div class="entry-card" id="entryCard">
+    <h3 id="entryTitle">Veldu dag til að skrá</h3>
+    <div id="entryForm"></div>
+  </div>
+
+</div>
+
+<!-- ============ YFIRLIT ============ -->
+<div id="sec-yfirlit" class="section">
+  <div class="overview-grid" id="overviewStats"></div>
+  <div class="chart-card">
+    <h3>Líðan, Streita & Einbeiting</h3>
+    <canvas id="chartRatings"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>HRV (RMSSD) þróun</h3>
+    <canvas id="chartHRV"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Æfingahlutfall á viku</h3>
+    <canvas id="chartAdherence"></canvas>
+  </div>
+</div>
+
+<!-- ============ TAFLA ============ -->
+<div id="sec-tafla" class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:1rem;font-weight:600">Öll gögn</span>
+    <div style="display:flex;gap:8px;">
+      <button class="export-btn" onclick="exportCSV()">Hlaða niður CSV</button>
+      <button class="export-btn" onclick="clearAllData()">Hreinsa öll gögn</button>
+    </div>
+  </div>
+  <div class="table-wrap" id="tableWrap"></div>
+</div>
+
+<!-- ============ STILLINGAR ============ -->
+<div id="sec-stillingar" class="section">
+  <div class="setup-card">
+    <h2>Stillingar</h2>
+    <div class="field">
+      <label>Nafn</label>
+      <input type="text" id="settings-name" />
+    </div>
+    <div class="field">
+      <label>Resonance tíðni (bpm)</label>
+      <select id="settings-bpm">
+        <option value="5">5 bpm</option>
+        <option value="5.5">5.5 bpm</option>
+        <option value="6">6 bpm</option>
+        <option value="6.5">6.5 bpm</option>
+        <option value="7">7 bpm</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Byrjunardagsetning</label>
+      <input type="date" id="settings-startdate" />
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">Vista stillingar</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// DATA LAYER
+// =============================================
+const STORAGE_KEY = 'hrv_dagbok_v1';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+
+function saveData(d) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+
+function getData() { return loadData(); }
+
+// =============================================
+// NAVIGATION
+// =============================================
+let currentSection = 'setup';
+let currentWeek = 1;
+let selectedDay = null;
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('visible');
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.textContent.toLowerCase().includes(name === 'dagbok' ? 'dagbók' : name === 'yfirlit' ? 'yfirlit' : name === 'tafla' ? 'tafla' : 'stilling')) {
+      t.classList.add('active');
+    }
+  });
+  currentSection = name;
+  if (name === 'dagbok') renderWeekView();
+  if (name === 'yfirlit') renderOverview();
+  if (name === 'tafla') renderTable();
+  if (name === 'stillingar') loadSettings();
+}
+
+// =============================================
+// SETUP
+// =============================================
+function saveSetup() {
+  const name = document.getElementById('setup-name').value.trim() || 'Þátttakandi';
+  const bpm = document.getElementById('setup-bpm').value;
+  const startdate = document.getElementById('setup-startdate').value;
+  if (!startdate) { alert('Veldu byrjunardagsetningu'); return; }
+
+  const d = getData();
+  d.profile = { name, bpm, startdate };
+  saveData(d);
+  initAfterSetup();
+}
+
+function initAfterSetup() {
+  const d = getData();
+  if (!d.profile) {
+    document.getElementById('sec-setup').classList.add('visible');
+    document.getElementById('sec-dagbok').classList.remove('visible');
+    // set default date
+    document.getElementById('setup-startdate').value = new Date().toISOString().split('T')[0];
+    return;
+  }
+  document.getElementById('sec-setup').classList.remove('visible');
+  document.getElementById('userHeader').textContent = getData().profile.name + ' · ' + getData().profile.bpm + ' bpm';
+  showSection('dagbok');
+}
+
+// =============================================
+// DATES
+// =============================================
+function getStartDate() {
+  const d = getData();
+  return d.profile ? new Date(d.profile.startdate) : new Date();
+}
+
+function getDayKey(weekNum, dayNum) {
+  // weekNum 1-5, dayNum 1-7
+  const start = getStartDate();
+  const offset = (weekNum - 1) * 7 + (dayNum - 1);
+  const date = new Date(start);
+  date.setDate(date.getDate() + offset);
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+function formatDateIS(dateStr) {
+  const d = new Date(dateStr);
+  const months = ['jan','feb','mar','apr','maí','jún','júl','ágú','sep','okt','nóv','des'];
+  return d.getDate() + '. ' + months[d.getMonth()];
+}
+
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// =============================================
+// WEEK VIEW
+// =============================================
+function changeWeek(dir) {
+  currentWeek = Math.max(1, Math.min(5, currentWeek + dir));
+  selectedDay = null;
+  renderWeekView();
+}
+
+function renderWeekView() {
+  const d = getData();
+  if (!d.profile) return;
+
+  document.getElementById('weekLabel').textContent = 'Vika ' + currentWeek;
+
+  const startKey = getDayKey(currentWeek, 1);
+  const endKey = getDayKey(currentWeek, 7);
+  document.getElementById('weekDates').textContent = formatDateIS(startKey) + ' – ' + formatDateIS(endKey);
+
+  const grid = document.getElementById('daysGrid');
+  grid.innerHTML = '';
+  const today = getTodayKey();
+
+  for (let day = 1; day <= 7; day++) {
+    const key = getDayKey(currentWeek, day);
+    const entry = (d.entries || {})[key];
+    const card = document.createElement('div');
+    card.className = 'day-card';
+    if (key === today) card.classList.add('today');
+    if (entry) card.classList.add('has-data');
+    if (selectedDay === key) card.classList.add('selected');
+
+    const globalDay = (currentWeek - 1) * 7 + day;
+    const weekdays = ['Mán','Þri','Mið','Fim','Fös','Lau','Sun'];
+
+    let badges = '';
+    if (entry) {
+      const e1 = entry.ex1_skip ? 'x' : (entry.ex1_min || 0);
+      const e2 = entry.ex2_skip ? 'x' : (entry.ex2_min || 0);
+      const both = !entry.ex1_skip && !entry.ex2_skip;
+      const none = entry.ex1_skip && entry.ex2_skip;
+      if (both && (entry.ex1_min >= 18) && (entry.ex2_min >= 18)) {
+        badges = '<div class="badge badge-done">Bæði lokið</div>';
+      } else if (none) {
+        badges = '<div class="badge badge-skip">Sleppt</div>';
+      } else {
+        badges = '<div class="badge badge-partial">Hluta</div>';
+      }
+    }
+
+    card.innerHTML = `
+      <div class="day-num">${globalDay}.</div>
+      <div class="day-date">${weekdays[(day-1)%7]} ${formatDateIS(key)}</div>
+      <div class="day-badges">${badges || (key <= today ? '<div class="badge" style="color:var(--text-muted);background:rgba(255,255,255,0.05)">Óskiráð</div>' : '')}</div>
+    `;
+
+    card.addEventListener('click', () => selectDay(key));
+    grid.appendChild(card);
+  }
+
+  if (selectedDay && getDayKey(currentWeek,1) <= selectedDay && selectedDay <= getDayKey(currentWeek,7)) {
+    renderEntryForm(selectedDay);
+  } else {
+    renderEntryFormEmpty();
+  }
+}
+
+function selectDay(key) {
+  selectedDay = key;
+  renderWeekView();
+  renderEntryForm(key);
+}
+
+// =============================================
+// ENTRY FORM
+// =============================================
+function renderEntryFormEmpty() {
+  document.getElementById('entryTitle').textContent = 'Veldu dag til að skrá';
+  document.getElementById('entryForm').innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;">Smelltu á dag hér að ofan til að skrá æfingu.</p>';
+}
+
+function renderEntryForm(key) {
+  const d = getData();
+  const entry = (d.entries || {})[key] || {};
+  const globalDay = getDayGlobal(key);
+
+  document.getElementById('entryTitle').textContent = `Dagur ${globalDay} — ${formatDateIS(key)}`;
+
+  const ex1min = entry.ex1_min !== undefined ? entry.ex1_min : 20;
+  const ex2min = entry.ex2_min !== undefined ? entry.ex2_min : 20;
+  const ex1skip = entry.ex1_skip || false;
+  const ex2skip = entry.ex2_skip || false;
+  const lidan = entry.lidan !== undefined ? entry.lidan : 5;
+  const streita = entry.streita !== undefined ? entry.streita : 5;
+  const einbeiting = entry.einbeiting !== undefined ? entry.einbeiting : 5;
+  const rmssd = entry.rmssd || '';
+  const hr = entry.hr || '';
+  const bpm_used = entry.bpm_used || getData().profile?.bpm || 6;
+  const notes = entry.notes || '';
+
+  document.getElementById('entryForm').innerHTML = `
+    <div class="exercises-row">
+      <div class="exercise-block">
+        <h4>Æfing 1</h4>
+        <label class="skip-toggle">
+          <input type="checkbox" id="ex1skip" ${ex1skip ? 'checked' : ''} onchange="toggleSkip(1)">
+          Sleppti æfingunni (x)
+        </label>
+        <div class="min-input" id="ex1mins" style="${ex1skip ? 'opacity:0.3;pointer-events:none' : ''}">
+          <input type="number" id="ex1min" min="0" max="60" value="${ex1min}" oninput="autoSave('${key}')">
+          <span>mínútur</span>
+        </div>
+      </div>
+      <div class="exercise-block">
+        <h4>Æfing 2</h4>
+        <label class="skip-toggle">
+          <input type="checkbox" id="ex2skip" ${ex2skip ? 'checked' : ''} onchange="toggleSkip(2)">
+          Sleppti æfingunni (x)
+        </label>
+        <div class="min-input" id="ex2mins" style="${ex2skip ? 'opacity:0.3;pointer-events:none' : ''}">
+          <input type="number" id="ex2min" min="0" max="60" value="${ex2min}" oninput="autoSave('${key}')">
+          <span>mínútur</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ratings-grid">
+      <div class="rating-item">
+        <label class="color-lidan">Líðan</label>
+        <div class="rating-display color-lidan" id="disp-lidan">${lidan}</div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="10" step="1" value="${lidan}" id="sl-lidan"
+            oninput="updateRating('lidan',this.value,'${key}')">
+        </div>
+        <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+      </div>
+      <div class="rating-item">
+        <label class="color-streita">Streita</label>
+        <div class="rating-display color-streita" id="disp-streita">${streita}</div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="10" step="1" value="${streita}" id="sl-streita"
+            oninput="updateRating('streita',this.value,'${key}')">
+        </div>
+        <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+      </div>
+      <div class="rating-item">
+        <label class="color-einbeiting">Einbeiting</label>
+        <div class="rating-display color-einbeiting" id="disp-einbeiting">${einbeiting}</div>
+        <div class="slider-wrap">
+          <input type="range" min="0" max="10" step="1" value="${einbeiting}" id="sl-einbeiting"
+            oninput="updateRating('einbeiting',this.value,'${key}')">
+        </div>
+        <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+      </div>
+    </div>
+
+    <div class="hrv-section">
+      <h4>HRV Mælingar (valfrjálst)</h4>
+      <div class="hrv-grid">
+        <div>
+          <label class="color-hrv">RMSSD (ms)</label>
+          <input type="number" id="inp-rmssd" placeholder="t.d. 45" value="${rmssd}" oninput="autoSave('${key}')">
+        </div>
+        <div>
+          <label>Hjartsláttur (bpm)</label>
+          <input type="number" id="inp-hr" placeholder="t.d. 62" value="${hr}" oninput="autoSave('${key}')">
+        </div>
+        <div>
+          <label>Andardr. tíðni notuð</label>
+          <input type="number" id="inp-bpm" placeholder="6" value="${bpm_used}" step="0.5" oninput="autoSave('${key}')">
+        </div>
+      </div>
+    </div>
+
+    <textarea class="notes" id="inp-notes" placeholder="Athugasemdir, hvernig leið þér, áskoranir..." oninput="autoSave('${key}')">${notes}</textarea>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-primary" style="flex:1" onclick="saveEntry('${key}')">Vista dag</button>
+    </div>
+    <div id="saveMsg" style="color:var(--green);font-size:0.8rem;margin-top:8px;text-align:center;min-height:18px;"></div>
+  `;
+}
+
+function toggleSkip(num) {
+  const cb = document.getElementById(`ex${num}skip`);
+  const minWrap = document.getElementById(`ex${num}mins`);
+  minWrap.style.opacity = cb.checked ? '0.3' : '1';
+  minWrap.style.pointerEvents = cb.checked ? 'none' : 'auto';
+}
+
+function updateRating(field, val, key) {
+  document.getElementById('disp-' + field).textContent = val;
+  autoSave(key);
+}
+
+let saveTimeout = null;
+function autoSave(key) {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => saveEntry(key, true), 800);
+}
+
+function saveEntry(key, silent = false) {
+  const d = getData();
+  if (!d.entries) d.entries = {};
+
+  const ex1skip = document.getElementById('ex1skip')?.checked || false;
+  const ex2skip = document.getElementById('ex2skip')?.checked || false;
+
+  d.entries[key] = {
+    ex1_skip: ex1skip,
+    ex2_skip: ex2skip,
+    ex1_min: ex1skip ? 0 : parseInt(document.getElementById('ex1min')?.value || 0),
+    ex2_min: ex2skip ? 0 : parseInt(document.getElementById('ex2min')?.value || 0),
+    lidan: parseInt(document.getElementById('sl-lidan')?.value || 5),
+    streita: parseInt(document.getElementById('sl-streita')?.value || 5),
+    einbeiting: parseInt(document.getElementById('sl-einbeiting')?.value || 5),
+    rmssd: document.getElementById('inp-rmssd')?.value || '',
+    hr: document.getElementById('inp-hr')?.value || '',
+    bpm_used: document.getElementById('inp-bpm')?.value || '',
+    notes: document.getElementById('inp-notes')?.value || '',
+    savedAt: new Date().toISOString()
+  };
+
+  saveData(d);
+
+  if (!silent) {
+    const msg = document.getElementById('saveMsg');
+    if (msg) { msg.textContent = 'Vistað! ✓'; setTimeout(() => msg.textContent = '', 2000); }
+  }
+
+  renderWeekView();
+}
+
+function getDayGlobal(key) {
+  const start = getStartDate();
+  const d = new Date(key);
+  const diff = Math.round((d - start) / (1000*60*60*24));
+  return diff + 1;
+}
+
+// =============================================
+// OVERVIEW
+// =============================================
+function renderOverview() {
+  const d = getData();
+  const entries = d.entries || {};
+  const keys = Object.keys(entries).sort();
+
+  // Stats
+  let totalDays = 0, completedBoth = 0, totalMinutes = 0, rmssdVals = [];
+  let lidanSum = 0, streitaSum = 0, einbeitingSum = 0, ratingCount = 0;
+
+  keys.forEach(k => {
+    const e = entries[k];
+    totalDays++;
+    const m1 = e.ex1_skip ? 0 : (e.ex1_min || 0);
+    const m2 = e.ex2_skip ? 0 : (e.ex2_min || 0);
+    totalMinutes += m1 + m2;
+    if (!e.ex1_skip && !e.ex2_skip && m1 >= 18 && m2 >= 18) completedBoth++;
+    if (e.rmssd) rmssdVals.push(parseFloat(e.rmssd));
+    lidanSum += e.lidan || 0;
+    streitaSum += e.streita || 0;
+    einbeitingSum += e.einbeiting || 0;
+    ratingCount++;
+  });
+
+  const adherence = totalDays > 0 ? Math.round((completedBoth / totalDays) * 100) : 0;
+  const avgRmssd = rmssdVals.length > 0 ? (rmssdVals.reduce((a,b)=>a+b,0)/rmssdVals.length).toFixed(1) : '—';
+  const avgLidan = ratingCount > 0 ? (lidanSum/ratingCount).toFixed(1) : '—';
+  const avgStreita = ratingCount > 0 ? (streitaSum/ratingCount).toFixed(1) : '—';
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card"><div class="s-val">${totalDays}</div><div class="s-lbl">Dagar skráðir</div></div>
+    <div class="stat-card"><div class="s-val">${completedBoth}</div><div class="s-lbl">Dagur með bæðar æfingar</div></div>
+    <div class="stat-card"><div class="s-val">${adherence}%</div><div class="s-lbl">Æfingahlutfall</div></div>
+    <div class="stat-card"><div class="s-val">${totalMinutes}</div><div class="s-lbl">Mínútur æft alls</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--yellow)"><div class="s-val color-hrv">${avgRmssd}</div><div class="s-lbl">Meðal RMSSD (ms)</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--inhale-color,#4fc3f7)"><div class="s-val color-lidan">${avgLidan}</div><div class="s-lbl">Meðal líðan</div></div>
+    <div class="stat-card" style="border-top:2px solid var(--red)"><div class="s-val color-streita">${avgStreita}</div><div class="s-lbl">Meðal streita</div></div>
+  `;
+
+  // Charts
+  const labels = keys.map(k => formatDateIS(k));
+  const lidanData = keys.map(k => entries[k].lidan || null);
+  const streitaData = keys.map(k => entries[k].streita || null);
+  const einbeitingData = keys.map(k => entries[k].einbeiting || null);
+  const rmssdData = keys.map(k => entries[k].rmssd ? parseFloat(entries[k].rmssd) : null);
+
+  // Weekly adherence
+  const weekAdh = [0,0,0,0,0];
+  const weekTotal = [0,0,0,0,0];
+  keys.forEach(k => {
+    const g = getDayGlobal(k);
+    const w = Math.min(4, Math.floor((g-1)/7));
+    weekTotal[w]++;
+    const e = entries[k];
+    if (!e.ex1_skip && !e.ex2_skip && (e.ex1_min||0)>=18 && (e.ex2_min||0)>=18) weekAdh[w]++;
+  });
+  const adhPct = weekTotal.map((t,i) => t > 0 ? Math.round((weekAdh[i]/t)*100) : null);
+
+  renderChart('chartRatings', 'line', labels, [
+    { label: 'Líðan', data: lidanData, borderColor: '#4fc3f7', tension: 0.3 },
+    { label: 'Streita', data: streitaData, borderColor: '#fc8181', tension: 0.3 },
+    { label: 'Einbeiting', data: einbeitingData, borderColor: '#81e6d9', tension: 0.3 },
+  ]);
+
+  renderChart('chartHRV', 'line', labels, [
+    { label: 'RMSSD (ms)', data: rmssdData, borderColor: '#f6e05e', tension: 0.3, spanGaps: true },
+  ]);
+
+  renderChart('chartAdherence', 'bar', ['Vika 1','Vika 2','Vika 3','Vika 4','Vika 5'], [
+    { label: 'Æfingahlutfall (%)', data: adhPct, backgroundColor: 'rgba(56,178,172,0.6)', borderColor: '#38b2ac', borderWidth: 1 },
+  ]);
+}
+
+let chartInstances = {};
+
+function renderChart(id, type, labels, datasets) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (chartInstances[id]) chartInstances[id].destroy();
+  chartInstances[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8ab4d4', font: { size: 11 } } }
+      },
+      scales: {
+        x: { ticks: { color: '#8ab4d4', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#8ab4d4', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.07)' } }
+      }
+    }
+  });
+}
+
+// =============================================
+// TABLE
+// =============================================
+function renderTable() {
+  const d = getData();
+  const entries = d.entries || {};
+  const keys = Object.keys(entries).sort();
+
+  if (keys.length === 0) {
+    document.getElementById('tableWrap').innerHTML = '<div class="info-banner">Engar skráningar enn. Byrjaðu á dagbókinni!</div>';
+    return;
+  }
+
+  let rows = keys.map(k => {
+    const e = entries[k];
+    const g = getDayGlobal(k);
+    const w = Math.ceil(g/7);
+    const ex1 = e.ex1_skip ? '<span class="pill pill-red">x</span>' : `${e.ex1_min || 0} mín`;
+    const ex2 = e.ex2_skip ? '<span class="pill pill-red">x</span>' : `${e.ex2_min || 0} mín`;
+    const both = !e.ex1_skip && !e.ex2_skip && (e.ex1_min||0)>=18 && (e.ex2_min||0)>=18;
+    const none = e.ex1_skip && e.ex2_skip;
+    const status = both ? '<span class="pill pill-green">Lokið</span>' : none ? '<span class="pill pill-red">Sleppt</span>' : '<span class="pill pill-yellow">Hluta</span>';
+    return `<tr>
+      <td>${g}. (V${w})</td>
+      <td>${formatDateIS(k)}</td>
+      <td>${ex1}</td>
+      <td>${ex2}</td>
+      <td>${status}</td>
+      <td style="color:#4fc3f7">${e.lidan ?? '—'}</td>
+      <td style="color:#fc8181">${e.streita ?? '—'}</td>
+      <td style="color:#81e6d9">${e.einbeiting ?? '—'}</td>
+      <td style="color:#f6e05e">${e.rmssd || '—'}</td>
+      <td>${e.hr || '—'}</td>
+      <td style="color:var(--text-muted);font-size:0.78rem">${(e.notes||'').substring(0,40)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tableWrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Dagur</th><th>Dagsetning</th><th>Æf. 1</th><th>Æf. 2</th><th>Staða</th>
+        <th>Líðan</th><th>Streita</th><th>Einb.</th><th>RMSSD</th><th>HR</th><th>Athugasemdir</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+// =============================================
+// EXPORT
+// =============================================
+function exportCSV() {
+  const d = getData();
+  const entries = d.entries || {};
+  const keys = Object.keys(entries).sort();
+
+  const header = ['Dagur','Dagsetning','Ex1_skip','Ex1_min','Ex2_skip','Ex2_min','Lidan','Streita','Einbeiting','RMSSD','HR','BPM_used','Notes'];
+  const rows = keys.map(k => {
+    const e = entries[k];
+    const g = getDayGlobal(k);
+    return [g, k, e.ex1_skip?'x':'', e.ex1_min||'', e.ex2_skip?'x':'', e.ex2_min||'',
+      e.lidan||'', e.streita||'', e.einbeiting||'', e.rmssd||'', e.hr||'', e.bpm_used||'',
+      '"'+(e.notes||'').replace(/"/g,"''")+'"'].join(',');
+  });
+
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'hrv_dagbok.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAllData() {
+  if (confirm('Ertu viss? Þetta eyðir ÖLLUM gögnum.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+
+// =============================================
+// SETTINGS
+// =============================================
+function loadSettings() {
+  const d = getData();
+  const p = d.profile || {};
+  document.getElementById('settings-name').value = p.name || '';
+  document.getElementById('settings-bpm').value = p.bpm || '6';
+  document.getElementById('settings-startdate').value = p.startdate || '';
+}
+
+function saveSettings() {
+  const d = getData();
+  d.profile = {
+    name: document.getElementById('settings-name').value,
+    bpm: document.getElementById('settings-bpm').value,
+    startdate: document.getElementById('settings-startdate').value,
+  };
+  saveData(d);
+  document.getElementById('userHeader').textContent = d.profile.name + ' · ' + d.profile.bpm + ' bpm';
+  alert('Stillingar vistaðar!');
+  showSection('dagbok');
+}
+
+// =============================================
+// INIT
+// =============================================
+window.addEventListener('DOMContentLoaded', () => {
+  const d = getData();
+  if (d.profile) {
+    initAfterSetup();
+  } else {
+    document.getElementById('setup-startdate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('sec-setup').classList.add('visible');
+    document.querySelectorAll('.nav-tab').forEach(t => t.style.display = 'none');
+  }
+});
+
+// Show nav tabs after setup
+const origInitAfterSetup = initAfterSetup;
+</script>
+</body>
+</html>
