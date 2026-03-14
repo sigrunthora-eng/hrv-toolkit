@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Markmið og Framfarir</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1f35; --surface: #1e3456; --surface2: #243f6a;
+    --border: #2d4a72; --text: #e8f4fd; --muted: #8ab4d4;
+    --accent: #63d0ff; --teal: #38b2ac; --teal-light: #81e6d9;
+    --green: #48bb78; --yellow: #f6c90e; --red: #fc8181;
+    --orange: #f6ad55;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh; padding: 24px;
+  }
+
+  /* AUTH CHECK */
+  .auth-block { display: none; }
+
+  h1 { font-size: 1.5rem; font-weight: 800; }
+  h2 { font-size: 1.1rem; font-weight: 700; }
+  h3 { font-size: 0.95rem; font-weight: 700; }
+
+  /* HEADER */
+  .header {
+    max-width: 860px; margin: 0 auto 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .back-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; color: var(--muted);
+    font-size: 0.85rem; cursor: pointer; text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .reset-btn {
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; color: var(--muted);
+    font-size: 0.78rem; cursor: pointer;
+  }
+  .reset-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* TABS */
+  .tabs {
+    max-width: 860px; margin: 0 auto 24px;
+    display: flex; gap: 4px;
+    background: var(--surface); border-radius: 12px; padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1; padding: 10px; text-align: center;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    border-radius: 9px; color: var(--muted);
+    transition: background 0.2s, color 0.2s;
+  }
+  .tab.active { background: var(--surface2); color: var(--accent); }
+
+  .panel { display: none; max-width: 860px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 16px;
+  }
+
+  /* SETUP SCREEN */
+  .setup-wrap {
+    max-width: 520px; margin: 0 auto;
+  }
+  .setup-wrap .card { padding: 32px; }
+  .setup-logo {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    border-radius: 14px; font-size: 1.6rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .setup-wrap h1 { text-align: center; margin-bottom: 6px; }
+  .setup-wrap .sub { text-align: center; color: var(--muted); font-size: 0.87rem; margin-bottom: 28px; line-height: 1.5; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block; font-size: 0.73rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px;
+  }
+  .field input, .field select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 16px;
+    font-size: 1rem; outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field .hint { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .btn-primary {
+    width: 100%; background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: white; border: none; border-radius: 10px;
+    padding: 14px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  /* DASHBOARD */
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+
+  .stat-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px;
+  }
+  .stat-box .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin-bottom: 6px; }
+  .stat-box .value { font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-box .unit { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+  .stat-box.green .value { color: var(--green); }
+  .stat-box.teal .value { color: var(--teal-light); }
+  .stat-box.yellow .value { color: var(--yellow); }
+
+  /* PROGRESS BAR */
+  .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .goal-pct { font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .goal-pct-label { font-size: 0.78rem; color: var(--muted); }
+  .milestone-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.3);
+    border-radius: 20px; padding: 5px 12px; font-size: 0.78rem; color: var(--green);
+  }
+
+  .progress-track {
+    background: var(--surface2); border-radius: 8px; height: 14px;
+    position: relative; margin-bottom: 10px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 8px;
+    background: linear-gradient(90deg, #2d7ab5, #38b2ac, #63d0ff);
+    transition: width 1s cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+  .progress-labels { display: flex; justify-content: space-between; font-size: 0.73rem; color: var(--muted); }
+
+  .milestone-row {
+    display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap;
+  }
+  .ms {
+    flex: 1; min-width: 60px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px; text-align: center; font-size: 0.72rem; color: var(--muted);
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+  .ms .ms-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+  .ms.reached { background: rgba(72,187,120,0.12); border-color: rgba(72,187,120,0.4); color: var(--green); }
+
+  /* CHART */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* LOG ENTRY */
+  .log-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 540px; margin: 0 auto; }
+  .today-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(99,208,255,0.1); border: 1px solid rgba(99,208,255,0.25);
+    border-radius: 20px; padding: 4px 12px; font-size: 0.78rem; color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .hrv-input-big {
+    width: 100%; background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 14px; color: var(--accent); padding: 16px;
+    font-size: 2.2rem; font-weight: 800; text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+  .hrv-input-big:focus { border-color: var(--accent); }
+  .hrv-input-big::placeholder { color: rgba(99,208,255,0.25); font-weight: 400; font-size: 1.4rem; }
+
+  .slider-field { margin-bottom: 20px; }
+  .slider-field label {
+    display: flex; justify-content: space-between;
+    font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .slider-field .slider-val { color: var(--accent); font-weight: 700; }
+  input[type="range"] {
+    width: 100%; accent-color: var(--teal); height: 4px; cursor: pointer;
+  }
+  .slider-ends { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+  .toggle-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .toggle-opt {
+    flex: 1; padding: 10px; text-align: center;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; font-size: 0.88rem; color: var(--muted); cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .toggle-opt.on { background: rgba(56,178,172,0.15); border-color: var(--teal); color: var(--teal-light); }
+
+  .notes-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 16px;
+    font-size: 0.92rem; outline: none; resize: vertical; min-height: 80px;
+    font-family: inherit; transition: border-color 0.2s;
+  }
+  .notes-input:focus { border-color: var(--accent); }
+
+  .already-logged {
+    background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.3);
+    border-radius: 12px; padding: 16px; text-align: center;
+    color: var(--green); font-size: 0.9rem; margin-bottom: 16px;
+  }
+
+  /* HISTORY TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th {
+    text-align: left; padding: 10px 12px;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(45,74,114,0.4); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(36,63,106,0.4); }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px;
+    font-size: 0.72rem; font-weight: 600;
+  }
+  .badge-green { background: rgba(72,187,120,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(246,201,14,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(252,129,129,0.15); color: var(--red); }
+
+  .export-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 16px; color: var(--muted);
+    font-size: 0.82rem; cursor: pointer; transition: border-color 0.2s;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 24px; font-size: 0.88rem;
+    color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transition: transform 0.3s ease; z-index: 100;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    .dash-grid { grid-template-columns: 1fr 1fr; }
+    .row2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen">
+  <div class="setup-wrap">
+    <div class="card">
+      <div class="setup-logo">🎯</div>
+      <h1>HRV Markmið</h1>
+      <p class="sub">Settu þér persónulegt HRV markmið og fylgstu með framförum þínum í rauntíma.</p>
+
+      <div class="field">
+        <label>Nafn þitt</label>
+        <input type="text" id="setupName" placeholder="Nafnið þitt">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Núverandi RMSSD (ms)</label>
+          <input type="number" id="setupBaseline" placeholder="t.d. 28" min="5" max="200">
+          <div class="hint">Meðaltal síðustu 7 daga</div>
+        </div>
+        <div class="field">
+          <label>Markmið RMSSD (ms)</label>
+          <input type="number" id="setupGoal" placeholder="t.d. 45" min="10" max="250">
+          <div class="hint">Hvert viltu komast?</div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Þjálfunartími</label>
+          <select id="setupDuration">
+            <option value="4">4 vikur</option>
+            <option value="8" selected>8 vikur</option>
+            <option value="12">12 vikur</option>
+            <option value="16">16 vikur</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Upphafsdagur</label>
+          <input type="date" id="setupDate">
+        </div>
+      </div>
+
+      <div style="background:rgba(99,208,255,0.06);border:1px solid rgba(99,208,255,0.15);border-radius:12px;padding:14px;margin-bottom:20px;font-size:0.82rem;color:var(--muted);line-height:1.6;">
+        💡 <strong style="color:var(--accent)">Vísbending:</strong> Hægt er að hækka RMSSD um 10-30% með reglubundinni HRV biofeedback þjálfun yfir 6-8 vikur.
+      </div>
+
+      <button class="btn-primary" onclick="saveSetup()">Hefja markmiðsferil →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="header">
+    <div class="header-left">
+      <a href="toolkit.html" class="back-btn">← Toolkit</a>
+      <div>
+        <h1>🎯 HRV Markmið</h1>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:2px" id="headerSub"></div>
+      </div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">Endurstilla</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('dash')">Yfirlit</div>
+    <div class="tab" onclick="showTab('log')">Skrá í dag</div>
+    <div class="tab" onclick="showTab('history')">Saga</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="tab-dash">
+
+    <!-- Goal progress card -->
+    <div class="goal-card">
+      <div class="goal-header">
+        <div>
+          <div class="card-title">Framfarir í átt að markmiði</div>
+          <div class="goal-pct" id="goalPct">0%</div>
+          <div class="goal-pct-label" id="goalPctLabel">af markmiði náð</div>
+        </div>
+        <div id="milestoneBadge" style="display:none" class="milestone-badge">🏆 Náð!</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="progress-labels">
+        <span id="baselineLabel">Grunnlína: —</span>
+        <span id="currentLabel">Núverandi: —</span>
+        <span id="goalLabel">Markmið: —</span>
+      </div>
+      <div class="milestone-row">
+        <div class="ms" id="ms25"><span class="ms-icon">🌱</span>25%</div>
+        <div class="ms" id="ms50"><span class="ms-icon">💪</span>50%</div>
+        <div class="ms" id="ms75"><span class="ms-icon">🔥</span>75%</div>
+        <div class="ms" id="ms100"><span class="ms-icon">🏆</span>100%</div>
+      </div>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="dash-grid">
+      <div class="stat-box">
+        <div class="label">Síðasta RMSSD</div>
+        <div class="value" id="lastRmssd">—</div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="stat-box teal">
+        <div class="label">7 daga meðaltal</div>
+        <div class="value" id="avg7">—</div>
+        <div class="unit">ms</div>
+      </div>
+      <div class="stat-box green">
+        <div class="label">Skráningarröð</div>
+        <div class="value" id="streak">0</div>
+        <div class="unit">dagar í röð</div>
+      </div>
+      <div class="stat-box yellow">
+        <div class="label">Skráningar alls</div>
+        <div class="value" id="totalEntries">0</div>
+        <div class="unit">dagar</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>RMSSD þróun</h3>
+        <div style="font-size:0.75rem;color:var(--muted)">— Markmið &nbsp; — Grunnlína</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="hrvChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Days remaining -->
+    <div class="card" id="daysCard">
+      <div class="card-title">Þjálfunarferill</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+        <div>
+          <div style="font-size:2rem;font-weight:800;color:var(--teal-light)" id="daysRemaining">—</div>
+          <div style="font-size:0.78rem;color:var(--muted)">dagar eftir</div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="background:var(--surface2);border-radius:6px;height:8px;overflow:hidden">
+            <div id="timeProgressFill" style="height:100%;background:linear-gradient(90deg,#38b2ac,#63d0ff);transition:width 1s;width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:4px">
+            <span id="startDateLabel">—</span>
+            <span id="endDateLabel">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOG ENTRY -->
+  <div class="panel" id="tab-log">
+    <div class="log-card">
+      <div class="today-badge" id="todayBadge">📅 —</div>
+      <div id="alreadyLogged" class="already-logged" style="display:none">✓ Þegar skráð í dag — þú getur uppfært færsluna hér að neðan</div>
+
+      <div class="field">
+        <label>RMSSD (ms) <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— morguns mæling</span></label>
+        <input type="number" class="hrv-input-big" id="logRmssd" placeholder="38" min="5" max="250">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label>Hjartsláttur (bpm)</label>
+          <input type="number" id="logHr" placeholder="62" min="30" max="200" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 16px;font-size:1rem;outline:none;width:100%;transition:border-color 0.2s">
+        </div>
+        <div class="field">
+          <label>Dagsetning</label>
+          <input type="date" id="logDate" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 16px;font-size:1rem;outline:none;width:100%">
+        </div>
+      </div>
+
+      <div class="slider-field">
+        <label>Líðan í dag <span class="slider-val" id="moodVal">5</span>/10</label>
+        <input type="range" id="logMood" min="1" max="10" value="5" oninput="document.getElementById('moodVal').textContent=this.value">
+        <div class="slider-ends"><span>Léleg</span><span>Frábær</span></div>
+      </div>
+
+      <div class="slider-field">
+        <label>Streita í dag <span class="slider-val" id="stressVal">5</span>/10</label>
+        <input type="range" id="logStress" min="1" max="10" value="5" oninput="document.getElementById('stressVal').textContent=this.value">
+        <div class="slider-ends"><span>Engin</span><span>Mikil</span></div>
+      </div>
+
+      <div class="field">
+        <label>HRV æfing í dag?</label>
+        <div class="toggle-row">
+          <div class="toggle-opt on" id="exYes" onclick="setEx(true)">✓ Já, gerði</div>
+          <div class="toggle-opt" id="exNo" onclick="setEx(false)">✗ Nei</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Athugasemdir (valfrjálst)</label>
+        <textarea class="notes-input" id="logNotes" placeholder="Hvernig leið þér? Eitthvað sérstakt í dag?"></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="saveEntry()">Vista dagsfærslu →</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="tab-history">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2>Allar færslur</h2>
+        <button class="export-btn" onclick="exportCSV()">↓ CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Dagsetning</th>
+              <th>RMSSD</th>
+              <th>HR</th>
+              <th>Líðan</th>
+              <th>Streita</th>
+              <th>Æfing</th>
+              <th>Athugasemd</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyHistory" style="text-align:center;padding:32px;color:var(--muted);font-size:0.88rem">Engar færslur enn — farðu í „Skrá í dag"!</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────
+if (window.location.pathname.includes('hrv_toolkit_vefur') &&
+    sessionStorage.getItem('hrv_auth') !== '1') {
+  window.location.href = 'index.html';
+}
+
+// ── STATE ─────────────────────────────────────────────
+let cfg = null;
+let entries = [];
+let exerciseToday = true;
+let chart = null;
+
+function load() {
+  const c = localStorage.getItem('hrv_goal_cfg');
+  const e = localStorage.getItem('hrv_goal_entries');
+  cfg = c ? JSON.parse(c) : null;
+  entries = e ? JSON.parse(e) : [];
+}
+
+function save() {
+  localStorage.setItem('hrv_goal_cfg', JSON.stringify(cfg));
+  localStorage.setItem('hrv_goal_entries', JSON.stringify(entries));
+}
+
+// ── SETUP ─────────────────────────────────────────────
+document.getElementById('setupDate').value = new Date().toISOString().split('T')[0];
+
+function saveSetup() {
+  const name = document.getElementById('setupName').value.trim();
+  const baseline = parseFloat(document.getElementById('setupBaseline').value);
+  const goal = parseFloat(document.getElementById('setupGoal').value);
+  const weeks = parseInt(document.getElementById('setupDuration').value);
+  const date = document.getElementById('setupDate').value;
+
+  if (!name) return alert('Vinsamlegast sláðu inn nafn');
+  if (!baseline || baseline < 5) return alert('Vinsamlegast sláðu inn gilda grunnlínu (ms)');
+  if (!goal || goal <= baseline) return alert('Markmið þarf að vera hærra en grunnlína');
+  if (!date) return alert('Veldu upphafsdagsetningu');
+
+  cfg = { name, baseline, goal, weeks, startDate: date };
+  save();
+  initApp();
+}
+
+// ── INIT APP ──────────────────────────────────────────
+function initApp() {
+  load();
+  if (!cfg) {
+    document.getElementById('setupScreen').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+    return;
+  }
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+
+  document.getElementById('headerSub').textContent = `${cfg.name} · Markmið: ${cfg.goal} ms`;
+  document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('todayBadge').textContent = '📅 ' + formatDate(new Date().toISOString().split('T')[0]);
+
+  updateDash();
+  checkTodayLogged();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function updateDash() {
+  const sorted = [...entries].sort((a,b) => a.date.localeCompare(b.date));
+
+  // Current avg (last 7 entries or fewer)
+  const recent = sorted.slice(-7);
+  const avg7 = recent.length ? Math.round(recent.reduce((s,e)=>s+e.rmssd,0)/recent.length) : cfg.baseline;
+  const last = sorted.length ? sorted[sorted.length-1].rmssd : null;
+
+  // Progress
+  const range = cfg.goal - cfg.baseline;
+  const gained = avg7 - cfg.baseline;
+  const pct = range > 0 ? Math.min(100, Math.max(0, Math.round((gained / range) * 100))) : 0;
+
+  document.getElementById('goalPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('baselineLabel').textContent = 'Grunnlína: ' + cfg.baseline + ' ms';
+  document.getElementById('currentLabel').textContent = 'Núverandi: ' + avg7 + ' ms';
+  document.getElementById('goalLabel').textContent = 'Markmið: ' + cfg.goal + ' ms';
+
+  // Milestones
+  ['25','50','75','100'].forEach(m => {
+    const el = document.getElementById('ms'+m);
+    if (pct >= parseInt(m)) el.classList.add('reached');
+    else el.classList.remove('reached');
+  });
+  if (pct >= 100) document.getElementById('milestoneBadge').style.display = 'flex';
+
+  // Stats
+  if (last) document.getElementById('lastRmssd').textContent = last;
+  document.getElementById('avg7').textContent = avg7;
+  document.getElementById('totalEntries').textContent = entries.length;
+
+  // Streak
+  let streak = 0;
+  const today = new Date().toISOString().split('T')[0];
+  const dateSet = new Set(entries.map(e=>e.date));
+  let d = new Date();
+  while (true) {
+    const ds = d.toISOString().split('T')[0];
+    if (dateSet.has(ds)) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  document.getElementById('streak').textContent = streak;
+
+  // Time progress
+  const start = new Date(cfg.startDate);
+  const end = new Date(start);
+  end.setDate(end.getDate() + cfg.weeks * 7);
+  const now = new Date();
+  const totalDays = cfg.weeks * 7;
+  const elapsed = Math.max(0, Math.floor((now - start) / 86400000));
+  const remaining = Math.max(0, Math.ceil((end - now) / 86400000));
+  const timePct = Math.min(100, Math.round((elapsed / totalDays) * 100));
+
+  document.getElementById('daysRemaining').textContent = remaining;
+  document.getElementById('timeProgressFill').style.width = timePct + '%';
+  document.getElementById('startDateLabel').textContent = formatDate(cfg.startDate);
+  document.getElementById('endDateLabel').textContent = formatDate(end.toISOString().split('T')[0]);
+
+  drawChart(sorted);
+}
+
+function drawChart(sorted) {
+  const ctx = document.getElementById('hrvChart').getContext('2d');
+  const labels = sorted.map(e => formatDate(e.date));
+  const data = sorted.map(e => e.rmssd);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'RMSSD',
+          data,
+          borderColor: '#63d0ff',
+          backgroundColor: 'rgba(99,208,255,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#63d0ff',
+          pointRadius: 4,
+          borderWidth: 2,
+        },
+        {
+          label: 'Markmið',
+          data: labels.map(() => cfg.goal),
+          borderColor: 'rgba(72,187,120,0.5)',
+          borderDash: [6,4],
+          pointRadius: 0,
+          borderWidth: 1.5,
+        },
+        {
+          label: 'Grunnlína',
+          data: labels.map(() => cfg.baseline),
+          borderColor: 'rgba(138,180,212,0.35)',
+          borderDash: [3,3],
+          pointRadius: 0,
+          borderWidth: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8ab4d4', font: { size: 11 }, maxTicksLimit: 8 }, grid: { color: 'rgba(45,74,114,0.4)' } },
+        y: { ticks: { color: '#8ab4d4', font: { size: 11 } }, grid: { color: 'rgba(45,74,114,0.4)' }, min: Math.max(0, cfg.baseline - 10) }
+      }
+    }
+  });
+}
+
+// ── LOG ENTRY ─────────────────────────────────────────
+function setEx(val) {
+  exerciseToday = val;
+  document.getElementById('exYes').classList.toggle('on', val);
+  document.getElementById('exNo').classList.toggle('on', !val);
+}
+
+function checkTodayLogged() {
+  const today = new Date().toISOString().split('T')[0];
+  const existing = entries.find(e => e.date === today);
+  if (existing) {
+    document.getElementById('alreadyLogged').style.display = 'block';
+    document.getElementById('logRmssd').value = existing.rmssd;
+    document.getElementById('logHr').value = existing.hr || '';
+    document.getElementById('logMood').value = existing.mood;
+    document.getElementById('moodVal').textContent = existing.mood;
+    document.getElementById('logStress').value = existing.stress;
+    document.getElementById('stressVal').textContent = existing.stress;
+    document.getElementById('logNotes').value = existing.notes || '';
+    setEx(existing.exercise);
+  }
+}
+
+function saveEntry() {
+  const rmssd = parseFloat(document.getElementById('logRmssd').value);
+  const hr = parseInt(document.getElementById('logHr').value) || null;
+  const date = document.getElementById('logDate').value;
+  const mood = parseInt(document.getElementById('logMood').value);
+  const stress = parseInt(document.getElementById('logStress').value);
+  const notes = document.getElementById('logNotes').value.trim();
+
+  if (!rmssd || rmssd < 5) return toast('Sláðu inn gilda RMSSD tölu', '⚠️');
+  if (!date) return toast('Veldu dagsetningu', '⚠️');
+
+  const idx = entries.findIndex(e => e.date === date);
+  const entry = { date, rmssd, hr, mood, stress, exercise: exerciseToday, notes };
+
+  if (idx >= 0) entries[idx] = entry;
+  else entries.push(entry);
+
+  save();
+  updateDash();
+  renderHistory();
+  toast('Færsla vistuð! 🎯', '✓');
+
+  // Check milestone
+  const range = cfg.goal - cfg.baseline;
+  const sorted = [...entries].sort((a,b)=>a.date.localeCompare(b.date));
+  const recent = sorted.slice(-7);
+  const avg7 = recent.length ? Math.round(recent.reduce((s,e)=>s+e.rmssd,0)/recent.length) : cfg.baseline;
+  const pct = range > 0 ? Math.min(100, Math.max(0, Math.round(((avg7-cfg.baseline)/range)*100))) : 0;
+  if (pct >= 25 && pct < 50) setTimeout(()=>toast('🌱 25% af markmiði náð!', ''), 800);
+  else if (pct >= 50 && pct < 75) setTimeout(()=>toast('💪 50% af markmiði náð!', ''), 800);
+  else if (pct >= 75 && pct < 100) setTimeout(()=>toast('🔥 75% af markmiði náð!', ''), 800);
+  else if (pct >= 100) setTimeout(()=>toast('🏆 Markmið náð! Frábært!', ''), 800);
+}
+
+// ── HISTORY ───────────────────────────────────────────
+function renderHistory() {
+  const sorted = [...entries].sort((a,b)=>b.date.localeCompare(a.date));
+  const tbody = document.getElementById('historyBody');
+  document.getElementById('emptyHistory').style.display = sorted.length ? 'none' : 'block';
+
+  tbody.innerHTML = sorted.map(e => {
+    const diff = e.rmssd - cfg.baseline;
+    const badge = diff > 5 ? `<span class="badge badge-green">↑${diff}</span>` :
+                  diff < -5 ? `<span class="badge badge-red">↓${Math.abs(diff)}</span>` :
+                  `<span class="badge badge-yellow">~</span>`;
+    return `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td><strong style="color:var(--accent)">${e.rmssd}</strong> ${badge}</td>
+      <td>${e.hr || '—'}</td>
+      <td>${e.mood}/10</td>
+      <td>${e.stress}/10</td>
+      <td>${e.exercise ? '✓' : '—'}</td>
+      <td style="color:var(--muted);font-size:0.8rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.notes || ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportCSV() {
+  const rows = [['Dagsetning','RMSSD','HR','Liðan','Streita','Aefing','Athugasemd']];
+  entries.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    rows.push([e.date, e.rmssd, e.hr||'', e.mood, e.stress, e.exercise?'Ja':'Nei', e.notes||'']);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = 'hrv_markmid_gögn.csv';
+  a.click();
+}
+
+// ── TABS ─────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'history') renderHistory();
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function formatDate(d) {
+  const dt = new Date(d+'T12:00:00');
+  return dt.toLocaleDateString('is-IS', { day:'numeric', month:'short' });
+}
+
+function toast(msg, icon='') {
+  const el = document.getElementById('toast');
+  el.innerHTML = (icon?`<span>${icon}</span>`:'') + msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+function resetAll() {
+  if (!confirm('Eyða öllum gögnum og byrja upp á nýtt?')) return;
+  localStorage.removeItem('hrv_goal_cfg');
+  localStorage.removeItem('hrv_goal_entries');
+  location.reload();
+}
+
+// ── START ─────────────────────────────────────────────
+load();
+initApp();
+</script>
+</body>
+</html>

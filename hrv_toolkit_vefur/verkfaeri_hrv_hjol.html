@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HRV Heildarsýn — Allir þættirnir</title>
+<style>
+  :root {
+    --bg: #0f1f35; --surface: #1e3456; --surface2: #243f6a;
+    --border: #2d4a72; --text: #e8f4fd; --muted: #8ab4d4;
+    --accent: #63d0ff; --teal: #38b2ac;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh; padding: 24px;
+  }
+
+  /* AUTH */
+  .header {
+    max-width: 1100px; margin: 0 auto 28px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .back-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; color: var(--muted);
+    font-size: 0.85rem; cursor: pointer; text-decoration: none;
+    transition: border-color 0.2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .header-text h1 { font-size: 1.45rem; font-weight: 800; }
+  .header-text p { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+  /* LAYOUT */
+  .main {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 420px 1fr; gap: 28px;
+    align-items: start;
+  }
+
+  /* WHEEL */
+  .wheel-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px;
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  #wheelSvg { width: 360px; height: 360px; cursor: pointer; }
+
+  .sector-path {
+    transition: opacity 0.2s, filter 0.2s;
+    opacity: 0.85;
+  }
+  .sector-path:hover { opacity: 1; filter: brightness(1.2); }
+  .sector-path.active { opacity: 1; filter: brightness(1.3) drop-shadow(0 0 8px currentColor); }
+
+  .legend {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    cursor: pointer; transition: border-color 0.2s;
+    font-size: 0.8rem;
+  }
+  .legend-item:hover { border-color: var(--accent); }
+  .legend-item.active { border-color: var(--accent); background: rgba(99,208,255,0.08); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* DETAIL PANEL */
+  .detail-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px;
+    min-height: 500px;
+  }
+
+  .empty-state {
+    height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    color: var(--muted); gap: 12px; padding: 40px;
+  }
+  .empty-icon { font-size: 3rem; opacity: 0.4; }
+  .empty-state p { font-size: 0.88rem; line-height: 1.6; max-width: 280px; }
+
+  .sector-detail { display: none; animation: fadeIn 0.3s ease; }
+  .sector-detail.show { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
+
+  .detail-header {
+    display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px;
+    padding-bottom: 20px; border-bottom: 1px solid var(--border);
+  }
+  .detail-icon-wrap {
+    width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 1.7rem;
+  }
+  .detail-header h2 { font-size: 1.25rem; font-weight: 800; margin-bottom: 6px; }
+  .impact-row { display: flex; align-items: center; gap: 8px; }
+  .impact-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .stars { font-size: 0.9rem; letter-spacing: 1px; }
+
+  .detail-summary {
+    font-size: 0.9rem; color: var(--muted); line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 12px;
+  }
+
+  .factor-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .factor-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .factor-item .fi { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
+  .factor-item .ft { font-size: 0.85rem; font-weight: 600; margin-bottom: 3px; }
+  .factor-item .fd { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  .tips-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 24px; }
+  .tip-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 10px;
+  }
+  .tip-item .ti { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+  .tip-item .tt { font-size: 0.85rem; line-height: 1.5; }
+
+  .tool-link {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(99,208,255,0.06); border: 1px solid rgba(99,208,255,0.2);
+    border-radius: 12px; padding: 14px 16px; text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+  .tool-link:hover { border-color: var(--accent); background: rgba(99,208,255,0.1); }
+  .tool-link .tl-icon { font-size: 1.2rem; }
+  .tool-link .tl-text { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+  .tool-link .tl-text strong { color: var(--accent); display: block; margin-bottom: 2px; }
+
+  /* MOBILE */
+  @media (max-width: 780px) {
+    .main { grid-template-columns: 1fr; }
+    #wheelSvg { width: 300px; height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<script>
+  if (window.location.pathname.includes('hrv_toolkit_vefur') &&
+      sessionStorage.getItem('hrv_auth') !== '1') {
+    window.location.href = 'index.html';
+  }
+</script>
+
+<div class="header">
+  <a href="toolkit.html" class="back-btn">← Toolkit</a>
+  <div class="header-text">
+    <h1>🔵 HRV Heildarsýn</h1>
+    <p>Allir þættirnir sem hafa áhrif á HRV — smelltu á hvern flokk til að læra meira</p>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- WHEEL -->
+  <div class="wheel-wrap">
+    <svg id="wheelSvg" viewBox="0 0 360 360"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔵</div>
+      <p>Smelltu á einn flokk í hjólinu til að sjá nákvæmar upplýsingar og ráðleggingar.</p>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+
+</div>
+
+<script>
+const cx = 180, cy = 180;
+const R_INNER = 58, R_OUTER = 162, GAP_DEG = 2.5;
+
+const sectors = [
+  {
+    id: 0, icon: '🫁', title: 'Öndunarfærni', color: '#63d0ff',
+    impact: 5,
+    summary: 'Öndunarfærni hefur bein og skjót áhrif á HRV í gegnum baroreflex — þrýstiviðtaka-reflex í æðunum. Þegar við öndum hægt og djúpt við rétta tíðni (resonance frequency ~6/mín) eykst HRV verulega og jafnvægi milli sympatíska og parasympatíska kerfisins batnar.',
+    factors: [
+      { icon: '🎯', title: 'Resonance tíðni', desc: 'Öndunarfærni við ~6 andardrátt/mín (±1) virkjar baroreflex og hámarkar HRV. Þetta er þungamiðja HRV biofeedback þjálfunar.' },
+      { icon: '📐', title: 'Innöndun/útöndun hlutfall', desc: '40% innöndun, 60% útöndun lengir útöndunina og eykur parasympathetic virkni.' },
+      { icon: '👃', title: 'Nef vs. munn öndunarfærni', desc: 'Nefondunarfærni eykur köfnunarefnisoxíð (NO) og styður parasympathetic. Munn öndunarfærni veldur oft grunni öndunarfærni.' },
+      { icon: '⬇️', title: 'Grunna öndunarfærni', desc: 'Öfug öndunarfærni (brjóst, grunnt) heldur sympatíska kerfinu virku og lækkar HRV.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'Æfðu resonance öndunarfærni 2×10 mín á dag — notaðu Öndunarverkfærið í toolkit' },
+      { icon: '✅', text: 'Andaðu alltaf í gegnum nefið — líka á meðan hreyfingu' },
+      { icon: '✅', text: 'Lengdu útöndunina — reyndu 4s inn, 6s út til að byrja með' },
+      { icon: '💡', text: 'Morgunmæling HRV er best þegar þú ert enn í hvíld — áður en þú stendur upp' },
+    ],
+    toolLink: { icon: '🫁', title: 'Öndunarverkfæri', desc: 'Leiðsögn í resonance öndunarfærni með stillanlegum BPM', href: 'verkfaeri_ondun.html' }
+  },
+  {
+    id: 1, icon: '😴', title: 'Svefn', color: '#b794f4',
+    impact: 5,
+    summary: 'HRV er hæst á nóttunni á meðan við sofum — sérstaklega í djúpum svefni (slow-wave sleep). Aðeins ein nótt með lélegum svefni getur lækkað morgunmælingu HRV um 15-25%. Langvarandi svefnskortur er ein helsta orsök lægra HRV.',
+    factors: [
+      { icon: '⏱️', title: 'Svefnlengd', desc: '7-9 klst er ákjósanlegast fyrir flesta fullorðna. Minna en 6 klst lækkar HRV verulega.' },
+      { icon: '🌊', title: 'Djúpur svefn (SWS)', desc: 'Slow-wave svefn er þar sem parasympathetic kerfi endurhleður sig. Alkóhól og skjárar skerða þennan svefn.' },
+      { icon: '🕐', title: 'Circadian lína', desc: 'Óreglulegar svefntímar trufla líffræðilega klukku og HRV. Föst svefntímar eru mikilvæg.' },
+      { icon: '😮‍💨', title: 'Svefntruflanir', desc: 'Svefntruflanir (snorkur, apnea) skerðir HRV og getur bent á alvarleg heilbrigðismál.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'Sofðu 7-9 klst og farðu að sofa á sama tíma — jafnvel um helgar' },
+      { icon: '✅', text: 'Forðastu skjái (blár ljós) 60 mín fyrir svefn — kveiktu night mode' },
+      { icon: '✅', text: 'Forðastu alkóhól — einn drykk getur lækkað HRV um ~20% þá nótt' },
+      { icon: '💡', text: 'Ef HRV er stöðugt lágt á morgnana en líðan góð, skoðaðu svefngæði sérstaklega' },
+    ],
+    toolLink: { icon: '📓', title: '5 vikna dagbók', desc: 'Skráðu svefngæði samhliða HRV til að sjá tengsl', href: 'verkfaeri_dagbok.html' }
+  },
+  {
+    id: 2, icon: '🏃', title: 'Hreyfing', color: '#68d391',
+    impact: 4,
+    summary: 'Reglubundin aerobic þjálfun er ein öflugasta langtímaráðstöfunin til að hækka HRV. Hins vegar er nægileg hvíld jafn mikilvæg — of mikil þjálfun án hvíldar lækkar HRV og eykur hættu á meiðslum. HRV getur virkað sem mælikvarði á hvort líkaminn er tilbúinn til þjálfunar.',
+    factors: [
+      { icon: '❤️', title: 'Aerobic þjálfun', desc: 'Hjarta- og æðaþjálfun (60-80% hámarkshjartsláttur) eykur HRV til lengri tíma með því að þjálfa parasympathetic kerfi.' },
+      { icon: '💪', title: 'Styrktarþjálfun', desc: 'Hefur minni beina áhrif á HRV en aerobic þjálfun, en bætir heildarliðlægi og styður HRV óbeint.' },
+      { icon: '⚠️', title: 'Ofþjálfun', desc: 'Langvarandi mikil þjálfun án hvíldar (overtraining syndrome) lækkar HRV verulega og er merki um streitu á líkamann.' },
+      { icon: '😴', title: 'Hvíldardagar', desc: 'HRV mæling á hvíldardegi gefur bestu mynd af grunnlínu. Lækkað HRV eftir þjálfunarlotu er eðlilegt.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'Stefndu að 150 mín í viku af miðlungs aerobic þjálfun (göngur, sund, hjól)' },
+      { icon: '✅', text: 'Notaðu HRV morgunmælingu til að meta hvort líkaminn er tilbúinn í þung þjálfun' },
+      { icon: '✅', text: 'Ef HRV er lágt, veldu léttari þjálfun eða hvíldardaginn' },
+      { icon: '💡', text: 'Ganga 20-30 mín á dag í náttúrunni sameinar hreyfingu og umhverfisáhrif á HRV' },
+    ],
+    toolLink: { icon: '🎯', title: 'HRV Markmið og Framfarir', desc: 'Fylgstu með HRV þegar þú byrjar þjálfunarferil', href: 'verkfaeri_markmid.html' }
+  },
+  {
+    id: 3, icon: '🧠', title: 'Sálfræðilegt ástand', color: '#f6ad55',
+    impact: 5,
+    summary: 'Langvarandi sálfræðileg streita og kvíði halda sympatíska kerfinu í stöðugri virkni og lækkar HRV. Hugur og HRV eru í tvíhliða tengingu — við getum notað ondunina til að hafa áhrif á hugann, og þjálfa hugann til að hafa áhrif á HRV.',
+    factors: [
+      { icon: '😰', title: 'Streita og kvíði', desc: 'Langvarandi streita heldur cortisol og adrenalin háu, sem bælir parasympathetic og lækkar HRV.' },
+      { icon: '🧘', title: 'Mindfulness og huglægni', desc: 'Reglubundin huglægnisæfing eykur vagus nerve virkni og HRV — áhrif sjást á 8 vikum.' },
+      { icon: '💭', title: 'Tilfinningalegar stjórnun', desc: 'Gæði tilfinningastjórnar (ekki bæling, en vinnsla) spáir fyrir HRV. Kvíðaleg hugsunarmynstur lækka HRV.' },
+      { icon: '🤝', title: 'Félagslegar tengingar', desc: 'Náin og örugg félagsleg tengsl auka oxytocin og styðja vagal tone og HRV.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'HRV biofeedback þjálfun er besta tækið til að nota hugann til að hafa áhrif á HRV' },
+      { icon: '✅', text: 'Settu mörk — segjðu nei við verkefni þegar þú ert yfirþreytt/ur' },
+      { icon: '✅', text: 'Æfðu mindfulness 10 mín á dag — jafnvel fara í göngutúr án síma telur' },
+      { icon: '💡', text: 'Ef þú ert í mikilli streitu, er HRV biofeedback sérstaklega áhrifaríkt — þjálfar slökunarviðbragðið' },
+    ],
+    toolLink: { icon: '📋', title: 'Grunnlínumat', desc: 'Metur streitu, svefn og einbeitingu með persónulegum ráðleggingum', href: 'verkfaeri_grunnlina_mat.html' }
+  },
+  {
+    id: 4, icon: '🍎', title: 'Lífsstíll & næring', color: '#fc8181',
+    impact: 4,
+    summary: 'Næring, vökvagjöf og efnanet hafa bein áhrif á taugakerfið og HRV. Bólgumyndandi mataræði, þurrkur og alkóhól lækka HRV, á meðan bólgueyðandi næring og góð vökvagjöf styðja HRV.',
+    factors: [
+      { icon: '🥗', title: 'Bólgueyðandi næring', desc: 'Omega-3 fitusýrur (fiskur, hörfræ), grænmeti og ávextir styðja HRV. Bólgumyndandi matur (sykur, unnin matur) lækkar HRV.' },
+      { icon: '💧', title: 'Vökvagjöf', desc: 'Þurrkur af jafnvel 2% eykur hjartslætti og lækkar HRV. 2-3 lítrar á dag er grundvöllur.' },
+      { icon: '🍷', title: 'Alkóhól', desc: 'Einn alkóhóldrykk getur lækkað HRV þá nótt um 20-40%. Alkóhól skerðir djúpan svefn verulega.' },
+      { icon: '☕', title: 'Koffín', desc: 'Koffín örvar sympatíska kerfi og getur lækkað HRV. Takmarka koffín eftir hádegi sérstaklega.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'Drekktu 2-3 lítra af vatni á dag — byrjaðu daginn á glasi af vatni' },
+      { icon: '✅', text: 'Takmarka alkóhól — prófaðu alkóhóllausa viku og mældu HRV breytinguna' },
+      { icon: '✅', text: 'Omega-3 fæðubætur (1-2g/dag) hafa verið tengdar auknu HRV í rannsóknum' },
+      { icon: '💡', text: 'Magnesium (glycinate) gæti stutt svefn og HRV — talaðu við lækni fyrst' },
+    ],
+    toolLink: { icon: '📓', title: '5 vikna dagbók', desc: 'Skráðu næringu og lífsstíl samhliða HRV til að sjá þróunina', href: 'verkfaeri_dagbok.html' }
+  },
+  {
+    id: 5, icon: '🌿', title: 'Umhverfi & tenging', color: '#81e6d9',
+    impact: 3,
+    summary: 'Umhverfi hefur víðtæk áhrif á taugakerfið — oft án þess að við gerum okkur grein fyrir því. Náttúran, félagslegar tengingar og lífeðlisfræðilegar örvunartækni eins og kuldameðferð geta allar hækkað vagal tone og HRV.',
+    factors: [
+      { icon: '🌲', title: 'Náttúra og útivist', desc: 'Forest bathing (shinrin-yoku) lækkar cortisol, blóðþrýsting og eykur HRV. 20 mín í náttúrunni á dag er nóg.' },
+      { icon: '🤝', title: 'Félagslegar tengingar', desc: 'Samvera með nánustu — sérstaklega með líkamsnærð — eykur oxytocin og vagal tone.' },
+      { icon: '🧊', title: 'Kuldameðferð', desc: 'Kalt sturtuvatn (30 sek) örvar vagus nerve og getur aukið HRV tímabundið. Verður reglubundet.' },
+      { icon: '🔇', title: 'Umhverfisstreita', desc: 'Langvarandi hávaði, loftmengun og ljósmengun á nóttunni hafa neikvæð áhrif á HRV.' },
+    ],
+    tips: [
+      { icon: '✅', text: 'Farðu í 20-30 mín göngutúr í náttúrunni á dag — án síma ef hægt er' },
+      { icon: '✅', text: 'Endaðu morgunsturtuna á 30-60 sekúndum af köldu vatni' },
+      { icon: '✅', text: 'Dýpkaðu félagslegar tengingar — gæðatími með nánustu er HRV þjálfun' },
+      { icon: '💡', text: 'Sonaðu í myrkri herbergi og forðastu hávaða á nóttunni — notaðu eyrnastopla ef þarf' },
+    ],
+    toolLink: null
+  },
+];
+
+// ── DRAW WHEEL ────────────────────────────────────────────────
+const svg = document.getElementById('wheelSvg');
+const legend = document.getElementById('legend');
+
+function polar(angle, r) {
+  const rad = (angle - 90) * Math.PI / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+}
+
+function arcPath(startDeg, endDeg, r1, r2) {
+  const s1 = polar(startDeg + GAP_DEG, r1), e1 = polar(endDeg - GAP_DEG, r1);
+  const s2 = polar(startDeg + GAP_DEG, r2), e2 = polar(endDeg - GAP_DEG, r2);
+  const large = (endDeg - startDeg - GAP_DEG*2) > 180 ? 1 : 0;
+  return `M ${s2[0]} ${s2[1]} A ${r2} ${r2} 0 ${large} 1 ${e2[0]} ${e2[1]} L ${e1[0]} ${e1[1]} A ${r1} ${r1} 0 ${large} 0 ${s1[0]} ${s1[1]} Z`;
+}
+
+function iconPos(i) {
+  const mid = i * 60 + 30;
+  return polar(mid, (R_INNER + R_OUTER) / 2);
+}
+
+let active = null;
+
+sectors.forEach((s, i) => {
+  const start = i * 60, end = (i+1) * 60;
+  const mid = start + 30;
+
+  // Arc path
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', arcPath(start, end, R_INNER, R_OUTER));
+  path.setAttribute('fill', s.color);
+  path.setAttribute('fill-opacity', '0.25');
+  path.setAttribute('stroke', s.color);
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('class', 'sector-path');
+  path.setAttribute('id', 'path-'+i);
+  path.style.cursor = 'pointer';
+  path.addEventListener('click', () => selectSector(i));
+  svg.appendChild(path);
+
+  // Icon text
+  const [ix, iy] = iconPos(i);
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  icon.setAttribute('x', ix);
+  icon.setAttribute('y', iy);
+  icon.setAttribute('text-anchor', 'middle');
+  icon.setAttribute('dominant-baseline', 'central');
+  icon.setAttribute('font-size', '22');
+  icon.setAttribute('style', 'pointer-events:none;user-select:none');
+  icon.textContent = s.icon;
+  svg.appendChild(icon);
+});
+
+// Center circle
+const centerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+centerCircle.setAttribute('cx', cx); centerCircle.setAttribute('cy', cy);
+centerCircle.setAttribute('r', R_INNER - 4);
+centerCircle.setAttribute('fill', '#1e3456');
+centerCircle.setAttribute('stroke', '#2d4a72');
+centerCircle.setAttribute('stroke-width', '1.5');
+svg.appendChild(centerCircle);
+
+const centerText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+centerText.setAttribute('x', cx); centerText.setAttribute('y', cy - 8);
+centerText.setAttribute('text-anchor', 'middle');
+centerText.setAttribute('fill', '#63d0ff');
+centerText.setAttribute('font-size', '13');
+centerText.setAttribute('font-weight', '700');
+centerText.setAttribute('font-family', 'Segoe UI, system-ui, sans-serif');
+centerText.textContent = 'HRV';
+svg.appendChild(centerText);
+
+const centerSub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+centerSub.setAttribute('x', cx); centerSub.setAttribute('y', cy + 9);
+centerSub.setAttribute('text-anchor', 'middle');
+centerSub.setAttribute('fill', '#8ab4d4');
+centerSub.setAttribute('font-size', '9');
+centerSub.setAttribute('font-family', 'Segoe UI, system-ui, sans-serif');
+centerSub.textContent = 'Smelltu';
+svg.appendChild(centerSub);
+
+// Legend
+sectors.forEach((s, i) => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  item.id = 'leg-'+i;
+  item.innerHTML = `<div class="legend-dot" style="background:${s.color}"></div><span>${s.icon} ${s.title}</span>`;
+  item.addEventListener('click', () => selectSector(i));
+  legend.appendChild(item);
+});
+
+// ── SELECT SECTOR ─────────────────────────────────────────────
+function selectSector(i) {
+  const s = sectors[i];
+
+  // Reset all
+  sectors.forEach((_, j) => {
+    document.getElementById('path-'+j).setAttribute('fill-opacity', '0.25');
+    document.getElementById('path-'+j).setAttribute('stroke-width', '1.5');
+    document.getElementById('path-'+j).classList.remove('active');
+    document.getElementById('leg-'+j).classList.remove('active');
+  });
+
+  // Activate
+  const path = document.getElementById('path-'+i);
+  path.setAttribute('fill-opacity', '0.5');
+  path.setAttribute('stroke-width', '2.5');
+  path.classList.add('active');
+  document.getElementById('leg-'+i).classList.add('active');
+
+  // Render detail
+  document.getElementById('emptyState').style.display = 'none';
+
+  const stars = '★'.repeat(s.impact) + '☆'.repeat(5-s.impact);
+  const impactLabel = ['','Lítið','Nokkuð','Miðlungs','Mikið','Mjög mikið'][s.impact];
+
+  const factorsHtml = s.factors.map(f => `
+    <div class="factor-item">
+      <div class="fi">${f.icon}</div>
+      <div><div class="ft">${f.title}</div><div class="fd">${f.desc}</div></div>
+    </div>`).join('');
+
+  const tipsHtml = s.tips.map(t => `
+    <div class="tip-item" style="background:rgba(${hexToRgb(s.color)},0.06);border-radius:10px">
+      <div class="ti">${t.icon}</div>
+      <div class="tt">${t.text}</div>
+    </div>`).join('');
+
+  const toolHtml = s.toolLink ? `
+    <div class="section-title" style="margin-top:24px">Tengd verkfæri í toolkit</div>
+    <div class="tool-link" onclick="window.location.href='${s.toolLink.href}'">
+      <div class="tl-icon">${s.toolLink.icon}</div>
+      <div class="tl-text"><strong>${s.toolLink.title}</strong>${s.toolLink.desc}</div>
+      <div style="color:var(--accent);margin-left:auto">→</div>
+    </div>` : '';
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="sector-detail show">
+      <div class="detail-header">
+        <div class="detail-icon-wrap" style="background:rgba(${hexToRgb(s.color)},0.15)">${s.icon}</div>
+        <div>
+          <h2>${s.title}</h2>
+          <div class="impact-row">
+            <span class="impact-label">Áhrif á HRV:</span>
+            <span class="stars" style="color:${s.color}">${stars}</span>
+            <span style="font-size:0.78rem;color:${s.color};font-weight:600">${impactLabel}</span>
+          </div>
+        </div>
+      </div>
+      <p class="detail-summary">${s.summary}</p>
+      <div class="section-title">Þættirnir sem skipta máli</div>
+      <div class="factor-list">${factorsHtml}</div>
+      <div class="section-title">Hvað get ég gert?</div>
+      <div class="tips-list">${tipsHtml}</div>
+      ${toolHtml}
+    </div>`;
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+// Auto-select first on load
+setTimeout(() => selectSector(0), 400);
+</script>
+</body>
+</html>
