@@ -532,9 +532,7 @@
 <script>
 // ---- TOOL OPENER ----
 function openTool(file) {
-  // Opens other tool files — adjust path if hosting online
-  const path = file;
-  window.open(path, '_blank');
+  window.location.href = file;
 }
 
 // ---- BREATHING ENGINE ----

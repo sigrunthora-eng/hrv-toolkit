@@ -288,6 +288,28 @@
     <div class="step-dots" id="stepDots"></div>
   </div>
 
+  <!-- LANDING SCREEN -->
+  <div id="landingScreen" style="display:none">
+    <div class="step-card" style="text-align:center;padding:48px 36px">
+      <div style="font-size:3rem;margin-bottom:16px">✍️</div>
+      <h2 style="font-size:1.5rem;margin-bottom:10px">Breytingaáætlun</h2>
+      <p style="color:var(--muted);font-size:0.9rem;max-width:420px;margin:0 auto 32px;line-height:1.7">
+        7 skrefa leiðsögn í hegðunarbreytingu — byggð á Motivational Interviewing, WOOP, ACT og Tiny Habits.<br>Tekur um 15-20 mínútur í fyrsta skipti.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:400px;margin:0 auto">
+        <button onclick="startExercise()" style="background:linear-gradient(135deg,#2d7ab5,#38b2ac);color:white;border:none;border-radius:14px;padding:18px 24px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+          <span>⚡ Byrja æfinguna</span>
+          <span style="font-size:0.82rem;opacity:0.8">7 skref →</span>
+        </button>
+        <a href="breytingar_leidbeiningar.html" style="background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:18px 24px;font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;color:var(--text);display:flex;align-items:center;justify-content:space-between;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span>📖 Lesa leiðbeiningarnar fyrst</span>
+          <span style="font-size:0.82rem;color:var(--muted)">MI · WOOP · Dæmi →</span>
+        </a>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:24px">Gögn eru vistuð sjálfkrafa — þú getur haldið áfram þar sem þú stoppaðir</p>
+    </div>
+  </div>
+
   <!-- STEPS CONTAINER -->
   <div id="stepsContainer"></div>
 
@@ -794,7 +816,22 @@ function saveData() {
 }
 
 // ── START ────────────────────────────────────────────────
-renderStep(data.completed ? 7 : currentStep);
+function startExercise() {
+  document.getElementById('landingScreen').style.display = 'none';
+  document.getElementById('progressHeader').style.display = 'block';
+  renderStep(data.completed ? 7 : currentStep);
+}
+
+// Show landing or go straight to summary if completed
+if (data.completed) {
+  renderStep(7);
+} else if (currentStep > 0) {
+  // Mid-way through — skip landing, continue where they left off
+  startExercise();
+} else {
+  document.getElementById('progressHeader').style.display = 'none';
+  document.getElementById('landingScreen').style.display = 'block';
+}
 </script>
 </body>
 </html>
