@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breytingaáætlun — Frá ásetningi til aðgerða</title>
+<style>
+  :root {
+    --bg: #0f1f35; --surface: #1e3456; --surface2: #243f6a;
+    --border: #2d4a72; --text: #e8f4fd; --muted: #8ab4d4;
+    --accent: #63d0ff; --teal: #38b2ac; --teal-light: #81e6d9;
+    --green: #48bb78; --yellow: #f6c90e; --purple: #b794f4;
+    --orange: #f6ad55;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh; padding: 24px;
+  }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; color: var(--muted);
+    font-size: 0.85rem; text-decoration: none; margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .wrap { max-width: 680px; margin: 0 auto; }
+
+  /* PROGRESS */
+  .progress-header { margin-bottom: 32px; }
+  .progress-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .step-label { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.05em; }
+  .step-title { font-size: 0.88rem; font-weight: 700; color: var(--accent); }
+  .progress-track {
+    background: var(--surface2); border-radius: 4px; height: 5px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, #2d7ab5, #38b2ac);
+    transition: width 0.5s ease;
+  }
+  .step-dots {
+    display: flex; gap: 6px; justify-content: center; margin-top: 10px;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .dot.done { background: var(--teal); border-color: var(--teal); }
+  .dot.active { background: var(--accent); border-color: var(--accent); transform: scale(1.3); }
+
+  /* CARD */
+  .step-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 36px 32px; margin-bottom: 20px;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+
+  .step-icon { font-size: 2.4rem; margin-bottom: 14px; }
+  .step-card h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 8px; }
+  .step-card .intro {
+    font-size: 0.88rem; color: var(--muted); line-height: 1.7; margin-bottom: 24px;
+  }
+  .theory-box {
+    background: rgba(99,208,255,0.06); border: 1px solid rgba(99,208,255,0.15);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 24px;
+    font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+  }
+  .theory-box strong { color: var(--accent); }
+
+  /* INPUTS */
+  textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text); padding: 14px 16px;
+    font-size: 0.92rem; outline: none; resize: vertical;
+    min-height: 100px; font-family: inherit; line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: rgba(138,180,212,0.45); }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px;
+  }
+  input[type="text"] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px 16px;
+    font-size: 1rem; outline: none; font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: rgba(138,180,212,0.35); }
+
+  /* VALUES GRID */
+  .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .value-card {
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+  }
+  .value-card:hover { border-color: var(--muted); }
+  .value-card.selected { border-color: var(--teal); background: rgba(56,178,172,0.1); }
+  .value-card .vi { font-size: 1.6rem; margin-bottom: 6px; }
+  .value-card .vt { font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .value-card .vd { font-size: 0.73rem; color: var(--muted); line-height: 1.4; }
+
+  /* RULER */
+  .ruler-wrap { margin-bottom: 28px; }
+  .ruler-question { font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; color: var(--text); }
+  .ruler-scale {
+    display: flex; gap: 5px; margin-bottom: 8px;
+  }
+  .ruler-btn {
+    flex: 1; aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--muted); font-size: 0.82rem;
+    font-weight: 700; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ruler-btn:hover { border-color: var(--muted); color: var(--text); }
+  .ruler-btn.selected { border-color: var(--teal); background: rgba(56,178,172,0.2); color: var(--teal-light); }
+  .ruler-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-bottom: 16px; }
+  .ruler-reflection {
+    background: rgba(183,148,244,0.08); border: 1px solid rgba(183,148,244,0.2);
+    border-radius: 10px; padding: 12px 14px; font-size: 0.82rem;
+    color: var(--muted); line-height: 1.6; display: none;
+  }
+  .ruler-reflection.show { display: block; }
+  .ruler-reflection strong { color: var(--purple); }
+
+  /* WOOP */
+  .woop-grid { display: flex; flex-direction: column; gap: 16px; }
+  .woop-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px;
+  }
+  .woop-letter {
+    font-size: 1.4rem; font-weight: 900; margin-bottom: 4px;
+  }
+  .woop-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 4px; }
+  .woop-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .woop-item textarea { min-height: 72px; }
+
+  /* IMPLEMENTATION INTENTION */
+  .ii-builder {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px;
+  }
+  .ii-row {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .ii-label {
+    font-size: 0.8rem; font-weight: 700; color: var(--accent);
+    white-space: nowrap;
+  }
+  .ii-input {
+    flex: 1; min-width: 160px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 10px 14px; font-size: 0.88rem;
+    outline: none; font-family: inherit; transition: border-color 0.2s;
+  }
+  .ii-input:focus { border-color: var(--accent); }
+  .ii-input::placeholder { color: rgba(138,180,212,0.35); }
+  .ii-preview {
+    background: rgba(99,208,255,0.08); border: 1px solid rgba(99,208,255,0.2);
+    border-radius: 10px; padding: 14px 16px; font-size: 0.9rem;
+    color: var(--text); line-height: 1.7; margin-top: 12px; font-style: italic;
+    min-height: 52px;
+  }
+  .ii-preview span { color: var(--accent); font-weight: 700; font-style: normal; }
+
+  /* HABIT STACK */
+  .habit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .habit-opt {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; cursor: pointer;
+    font-size: 0.88rem; transition: border-color 0.2s, background 0.2s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .habit-opt:hover { border-color: var(--muted); }
+  .habit-opt.selected { border-color: var(--teal); background: rgba(56,178,172,0.1); }
+  .habit-opt .ho { font-size: 1.1rem; }
+
+  /* COMMITMENT */
+  .commitment-box {
+    background: linear-gradient(135deg, rgba(45,122,181,0.15), rgba(56,178,172,0.15));
+    border: 1px solid rgba(99,208,255,0.25); border-radius: 16px; padding: 24px;
+    margin-bottom: 20px;
+  }
+  .commitment-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--accent); }
+  .commitment-preview {
+    font-size: 0.9rem; line-height: 1.9; color: var(--text);
+  }
+  .commitment-preview .hl { color: var(--teal-light); font-weight: 600; }
+  .sign-field { margin-top: 16px; }
+  .sign-field label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; display: block; }
+
+  /* SUMMARY PAGE */
+  .summary-header {
+    text-align: center; padding: 20px 0 28px;
+    border-bottom: 1px solid var(--border); margin-bottom: 28px;
+  }
+  .summary-icon { font-size: 3rem; margin-bottom: 12px; }
+  .summary-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+  .summary-header p { color: var(--muted); font-size: 0.88rem; }
+
+  .summary-section { margin-bottom: 24px; }
+  .summary-section h3 {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .summary-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 8px;
+    font-size: 0.88rem; line-height: 1.6;
+  }
+  .summary-item .si-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+  .summary-item .si-value { color: var(--text); }
+
+  /* BUTTONS */
+  .btn-row { display: flex; gap: 10px; }
+  .btn-primary {
+    flex: 1; background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: white; border: none; border-radius: 12px;
+    padding: 14px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 12px;
+    padding: 14px 20px; font-size: 0.9rem; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-print {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 10px;
+    padding: 10px 18px; font-size: 0.85rem; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  @media print {
+    .back-btn, .btn-row, .btn-print, .progress-header { display: none !important; }
+    body { background: white; color: #111; padding: 0; }
+    .step-card { border: 1px solid #ddd; box-shadow: none; }
+  }
+
+  @media (max-width: 600px) {
+    .values-grid { grid-template-columns: 1fr 1fr; }
+    .step-card { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+  if (window.location.pathname.includes('hrv_toolkit_vefur') &&
+      sessionStorage.getItem('hrv_auth') !== '1') {
+    window.location.href = 'index.html';
+  }
+</script>
+
+<div class="wrap">
+  <a href="toolkit.html" class="back-btn">← Toolkit</a>
+
+  <!-- PROGRESS -->
+  <div class="progress-header" id="progressHeader">
+    <div class="progress-top">
+      <span class="step-label" id="stepLabel">Skref 1 af 7</span>
+      <span class="step-title" id="stepTitle">Gildi þín</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:14%"></div>
+    </div>
+    <div class="step-dots" id="stepDots"></div>
+  </div>
+
+  <!-- STEPS CONTAINER -->
+  <div id="stepsContainer"></div>
+
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────
+let data = JSON.parse(localStorage.getItem('hrv_breytingar') || '{}');
+let currentStep = data.lastStep || 0;
+
+const totalSteps = 7;
+
+const VALUES = [
+  { icon: '👨‍👩‍👧', title: 'Fjölskylda', desc: 'Vera til staðar og orkulegur/orkuleg' },
+  { icon: '💼', title: 'Vinna', desc: 'Einbeiting, frammistæða, sköpun' },
+  { icon: '💪', title: 'Heilsa', desc: 'Líkamleg og andleg vellíðan' },
+  { icon: '🧠', title: 'Hugar-ró', desc: 'Friður, jafnvægi, streitu-stjórnun' },
+  { icon: '🤝', title: 'Tengsl', desc: 'Náin og gagnleg samskipti' },
+  { icon: '🌱', title: 'Vöxtur', desc: 'Lærdómur, þróun, persónuleg framþróun' },
+  { icon: '🎯', title: 'Áhrif', desc: 'Gera eitthvað sem skiptir máli' },
+  { icon: '⚡', title: 'Orka', desc: 'Líðan, þrek og lífsgleði' },
+];
+
+const HABITS = [
+  { icon: '☕', text: 'Morgunmatur / kaffi' },
+  { icon: '🪥', text: 'Tannbursting á morgun' },
+  { icon: '🚿', text: 'Sturta á morgun' },
+  { icon: '📱', text: 'Athuga símann þegar ég vakna' },
+  { icon: '🚗', text: 'Bílferð / ferðalög' },
+  { icon: '🍽️', text: 'Hádegismatur' },
+  { icon: '🌙', text: 'Kvöldrutin fyrir svefn' },
+  { icon: '🪑', text: 'Setjast niður að vinnu' },
+];
+
+// ── STEP DEFINITIONS ────────────────────────────────────
+const steps = [
+  { label: 'Gildi þín', title: 'Tengdu æfinguna við það sem skiptir máli' },
+  { label: 'Mikilvægi', title: 'Hversu mikilvægt er þetta þér?' },
+  { label: 'Tvíhyggja', title: 'Kostir og gallar breytinga' },
+  { label: 'WOOP', title: 'Draumur, niðurstaða, hindrun, áætlun' },
+  { label: 'Þegar... þá...', title: 'Framkvæmdaáætlun' },
+  { label: 'Vanaaðlögun', title: 'Tengdu við núverandi venjur' },
+  { label: 'Skuldbinding', title: 'Þín persónulega áætlun' },
+];
+
+// ── RENDER STEP ─────────────────────────────────────────
+function renderStep(i) {
+  currentStep = i;
+  data.lastStep = i;
+  saveData();
+  updateProgress(i);
+
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'step-card';
+
+  switch(i) {
+    case 0: card.innerHTML = renderStep0(); break;
+    case 1: card.innerHTML = renderStep1(); break;
+    case 2: card.innerHTML = renderStep2(); break;
+    case 3: card.innerHTML = renderStep3(); break;
+    case 4: card.innerHTML = renderStep4(); break;
+    case 5: card.innerHTML = renderStep5(); break;
+    case 6: card.innerHTML = renderStep6(); break;
+    case 7: card.innerHTML = renderSummary(); break;
+  }
+
+  container.appendChild(card);
+
+  // Re-attach interactive elements
+  if (i === 0) attachValueCards();
+  if (i === 1) attachRulers();
+  if (i === 4) attachIIBuilder();
+  if (i === 5) attachHabitList();
+  if (i === 7) {
+    document.getElementById('progressHeader').style.display = 'none';
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── STEP 0: VALUES ───────────────────────────────────────
+function renderStep0() {
+  const selected = data.values || [];
+  return `
+    <div class="step-icon">🌟</div>
+    <h2>Hvað skiptir þig máli?</h2>
+    <p class="intro">Rannsóknir sýna að breytingar sem tengjast dýpri gildum standa lengur. Þegar við vitum <em>hvers vegna</em> eitthvað skiptir máli, eykst innri hvatning (intrinsic motivation) — og þá þurfum við ekki að vera háð vilja.</p>
+    <div class="theory-box">
+      <strong>ACT — Gildi og skuldbinding:</strong> Breytingar sem byggjast á eigin gildum — ekki utankomandi þrýstingi — leiða til sjálfbærari hegðunar. Spurðu þig: „Hvernig er heilsa og HRV hluti af því sem ég vil vera?"
+    </div>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:14px">Veldu 2-3 svið þar sem heilsa og orka þín hefur mest áhrif:</p>
+    <div class="values-grid" id="valuesGrid">
+      ${VALUES.map((v,j) => `
+        <div class="value-card ${selected.includes(j)?'selected':''}" onclick="toggleValue(${j})">
+          <div class="vi">${v.icon}</div>
+          <div class="vt">${v.title}</div>
+          <div class="vd">${v.desc}</div>
+        </div>`).join('')}
+    </div>
+    <div class="field">
+      <label>Í eigin orðum — hvers vegna skiptir HRV heilsa máli fyrir þig?</label>
+      <textarea id="valuesText" placeholder="Þegar ég er með góða orku og líðan, þá get ég...">${data.valuesText||''}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="nextStep0()">Áfram →</button>
+    </div>`;
+}
+
+function attachValueCards() {}
+function toggleValue(j) {
+  if (!data.values) data.values = [];
+  const idx = data.values.indexOf(j);
+  if (idx >= 0) data.values.splice(idx, 1);
+  else data.values.push(j);
+  document.querySelectorAll('.value-card').forEach((el, k) => {
+    el.classList.toggle('selected', data.values.includes(k));
+  });
+}
+function nextStep0() {
+  data.valuesText = document.getElementById('valuesText').value;
+  saveData(); renderStep(1);
+}
+
+// ── STEP 1: MI RULERS ────────────────────────────────────
+function renderStep1() {
+  return `
+    <div class="step-icon">📊</div>
+    <h2>Mikilvægi og trú á sjálfan sig</h2>
+    <p class="intro">Motivational Interviewing notar tvo kvarða til að skilja hvar maður stendur: hversu <em>mikilvægt</em> er breytingin, og hversu <em>trúr</em> ert þú þér um að þú getir gert það. Báðar spurningar eru nauðsynlegar.</p>
+    <div class="theory-box">
+      <strong>MI — Breytingasamtal:</strong> Spurning eins og „Hvers vegna gafst þú 6 en ekki 3?" veldur því að við sjálf röktum breytinguna — og það eykur líkurnar á að við gerum hana.
+    </div>
+
+    <div class="ruler-wrap">
+      <div class="ruler-question">Á kvarðanum 1-10, <strong>hversu mikilvægt er þér</strong> að byrja reglubundna HRV biofeedback æfingu?</div>
+      <div class="ruler-scale" id="importanceRuler">
+        ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="ruler-btn ${(data.importance||0)===n?'selected':''}" onclick="selectRuler('importance',${n})">${n}</button>`).join('')}
+      </div>
+      <div class="ruler-labels"><span>Ekkert mikilvægt</span><span>Mjög mikilvægt</span></div>
+      <div class="ruler-reflection ${data.importance>=4?'show':''}" id="importanceRef">
+        <strong>Hugsaðu um þetta:</strong> Þú gafst ${data.importance||'?'} — hvers vegna gafst þú þetta en ekki lægra tölu? Hvað er það sem þýðir mest fyrir þig?
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Hvers vegna þetta gildi — ekki lægra?</label>
+        <textarea id="importanceText" placeholder="Vegna þess að..." style="min-height:72px">${data.importanceText||''}</textarea>
+      </div>
+    </div>
+
+    <div class="ruler-wrap">
+      <div class="ruler-question">Á kvarðanum 1-10, <strong>hversu trúr ert þú þér</strong> um að þú getir gert þetta reglulega?</div>
+      <div class="ruler-scale" id="confidenceRuler">
+        ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="ruler-btn ${(data.confidence||0)===n?'selected':''}" onclick="selectRuler('confidence',${n})">${n}</button>`).join('')}
+      </div>
+      <div class="ruler-labels"><span>Ekkert trúr</span><span>Mjög trúr</span></div>
+      <div class="ruler-reflection ${data.confidence>=4?'show':''}" id="confidenceRef">
+        <strong>Hugsaðu um þetta:</strong> Hvað myndi hjálpa þér að fara úr ${data.confidence||'?'} í ${(data.confidence||0)+1}? Hvað vantar?
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Hvað myndi hjálpa þér að vera enn trúari þér?</label>
+        <textarea id="confidenceText" placeholder="Það myndi hjálpa ef..." style="min-height:72px">${data.confidenceText||''}</textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="renderStep(0)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep1()">Áfram →</button>
+    </div>`;
+}
+
+function attachRulers() {}
+function selectRuler(type, val) {
+  data[type] = val;
+  saveData();
+  document.querySelectorAll(`#${type}Ruler .ruler-btn`).forEach((btn, i) => {
+    btn.classList.toggle('selected', i+1 === val);
+  });
+  const ref = document.getElementById(type+'Ref');
+  if (ref) {
+    ref.classList.toggle('show', val >= 3);
+    const txt = type === 'importance'
+      ? `<strong>Hugsaðu um þetta:</strong> Þú gafst <strong style="color:var(--purple)">${val}</strong> — hvers vegna þetta en ekki lægra? Hvað er það sem þýðir mest fyrir þig?`
+      : `<strong>Hugsaðu um þetta:</strong> Hvað myndi hjálpa þér að fara úr <strong style="color:var(--purple)">${val}</strong> í ${val+1}? Hvað vantar til að trú þín á sjálfan þig aukist?`;
+    ref.innerHTML = txt;
+  }
+}
+function nextStep1() {
+  data.importanceText = document.getElementById('importanceText').value;
+  data.confidenceText = document.getElementById('confidenceText').value;
+  saveData(); renderStep(2);
+}
+
+// ── STEP 2: AMBIVALENCE ──────────────────────────────────
+function renderStep2() {
+  return `
+    <div class="step-icon">⚖️</div>
+    <h2>Tveir hliðar sögunnar</h2>
+    <p class="intro">Við höfum öll tvíhyggju um breytingar — hluti af okkur vill breytast, annar hluti vill haldast óbreyttur. Í stað þess að berjast við þetta, skoðum við hvoru tveggja með opnum huga. Þetta er kjarni MI.</p>
+    <div class="theory-box">
+      <strong>MI — Tvíhyggja:</strong> „Rolling with resistance" þýðir að við berum ekki brigsl á sjálfan okkur fyrir að vera tvíbent. Það er mannlegt. Þegar við viðurkennum báðar hliðar, minnkar andspyrnan og innri hvati eykst.
+    </div>
+
+    <div class="field">
+      <label>💚 Hvað myndi breytast til batnaðar ef þú byrjaðir reglulega HRV æfingu?</label>
+      <textarea id="prosText" placeholder="T.d. ég myndi vera rólegur/róleg, betra einbeiting, líðan batna, sofa betur...">${data.prosText||''}</textarea>
+    </div>
+    <div class="field">
+      <label>🔴 Hvað er það sem heldur þig aftur eða gæti komið í veg fyrir þetta?</label>
+      <textarea id="consText" placeholder="T.d. tímaskortur, man það ekki, líður ekki vel, annað kemur í veg...">${data.consText||''}</textarea>
+    </div>
+    <div class="field">
+      <label>💭 Þegar þú lest það sem þú skrifaðir — hvað segjir þú þér sjálfum/sjálfri?</label>
+      <textarea id="reflectionText" placeholder="Ég held að..." style="min-height:80px">${data.reflectionText||''}</textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="renderStep(1)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep2()">Áfram →</button>
+    </div>`;
+}
+function nextStep2() {
+  data.prosText = document.getElementById('prosText').value;
+  data.consText = document.getElementById('consText').value;
+  data.reflectionText = document.getElementById('reflectionText').value;
+  saveData(); renderStep(3);
+}
+
+// ── STEP 3: WOOP ─────────────────────────────────────────
+function renderStep3() {
+  return `
+    <div class="step-icon">🌠</div>
+    <h2>WOOP — Frá draumi til áætlunar</h2>
+    <p class="intro">WOOP (Wish–Outcome–Obstacle–Plan) er rannsóknarlega studd aðferð sem sameinar draumsýn með raunhæfri hindrunarskipulagningu. Rannsóknir Gabriele Oettingen sýna að WOOP er marktækt áhrifaríkara en jákvæð hugsun ein og sér.</p>
+    <div class="theory-box">
+      <strong>WOOP:</strong> Einungis að hugsa um góðar niðurstöður (e. positive visualization) getur minnkað hvatningu. En að sameina draumsýn við raunhæfa hindrunaráætlun (implementation intention) eykur líkurnar á raunverulegar breytingar verulega.
+    </div>
+    <div class="woop-grid">
+      <div class="woop-item">
+        <div class="woop-letter" style="color:#63d0ff">W</div>
+        <div class="woop-title">Wish — Draumurinn</div>
+        <div class="woop-desc">Hvað viltu ná með HRV æfingunni á næstu 8 vikum? Gerðu þetta persónulegt og raunhæft.</div>
+        <textarea id="wW" placeholder="Ég vil..." style="min-height:72px">${data.wW||''}</textarea>
+      </div>
+      <div class="woop-item">
+        <div class="woop-letter" style="color:#48bb78">O</div>
+        <div class="woop-title">Outcome — Besta mögulega niðurstaðan</div>
+        <div class="woop-desc">Lokaðu augunum. Hvernig myndirðu líða þegar þú hefur náð þessu? Hvað myndi breytast?</div>
+        <textarea id="wO" placeholder="Ég myndi líða..." style="min-height:72px">${data.wO||''}</textarea>
+      </div>
+      <div class="woop-item">
+        <div class="woop-letter" style="color:#f6ad55">O</div>
+        <div class="woop-title">Obstacle — Stærsta hindrunin</div>
+        <div class="woop-desc">Hvað er STÆRSTA innra hindrunin? Ekki ytri (tími), heldur hvað inni í þér gæti stoppað þig?</div>
+        <textarea id="wO2" placeholder="Stærsta hindrunin er..." style="min-height:72px">${data.wO2||''}</textarea>
+      </div>
+      <div class="woop-item">
+        <div class="woop-letter" style="color:#b794f4">P</div>
+        <div class="woop-title">Plan — Þegar hindrunin kemur upp</div>
+        <div class="woop-desc">Fylltu inn: „Þegar [hindrunin] kemur upp, þá mun ég [aðgerð]." Þetta er implementation intention.</div>
+        <textarea id="wP" placeholder="Þegar... þá mun ég..." style="min-height:72px">${data.wP||''}</textarea>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn-secondary" onclick="renderStep(2)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep3()">Áfram →</button>
+    </div>`;
+}
+function nextStep3() {
+  data.wW = document.getElementById('wW').value;
+  data.wO = document.getElementById('wO').value;
+  data.wO2 = document.getElementById('wO2').value;
+  data.wP = document.getElementById('wP').value;
+  saveData(); renderStep(4);
+}
+
+// ── STEP 4: IMPLEMENTATION INTENTION ────────────────────
+function renderStep4() {
+  return `
+    <div class="step-icon">⚡</div>
+    <h2>Þegar... þá... — Framkvæmdaáætlun</h2>
+    <p class="intro">Implementation intentions eru ein af öflugustu tækni hegðunarbreytinga. Þær breyta óljósum ásetningi („ég ætla að æfa mig") í sérstæðan áætlun („þegar X gerist, þá geri ég Y"). Rannsóknir Peter Gollwitzers sýna að þetta tvöfaldar líkurnar á framkvæmd.</p>
+    <div class="theory-box">
+      <strong>Formúlan:</strong> „Þegar [sérstakt augnablik/merki], þá mun ég [sérstæk aðgerð], í [stað]." — Því nákvæmari sem áætlunin er, því líklegra er að hún gangi eftir.
+    </div>
+    <div class="ii-builder">
+      <div class="ii-row">
+        <span class="ii-label">🕐 Þegar</span>
+        <input class="ii-input" id="iiWhen" placeholder="t.d. klukkan 07:30 á morgnana" value="${data.iiWhen||''}" oninput="updateIIPreview()">
+      </div>
+      <div class="ii-row">
+        <span class="ii-label">📍 Þá mun ég</span>
+        <input class="ii-input" id="iiWhat" placeholder="t.d. setjast niður og opna Öndunarverkfærið" value="${data.iiWhat||''}" oninput="updateIIPreview()">
+      </div>
+      <div class="ii-row">
+        <span class="ii-label">🏠 Í/á</span>
+        <input class="ii-input" id="iiWhere" placeholder="t.d. borðstofunni heima" value="${data.iiWhere||''}" oninput="updateIIPreview()">
+      </div>
+      <div class="ii-row">
+        <span class="ii-label">⏱️ Í</span>
+        <input class="ii-input" id="iiHow" placeholder="t.d. 10 mínútur" value="${data.iiHow||''}" oninput="updateIIPreview()">
+      </div>
+      <div class="ii-preview" id="iiPreview">
+        <em style="color:var(--muted)">Fylltu inn að ofan til að sjá persónulegu áætlunina þína...</em>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn-secondary" onclick="renderStep(3)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep4()">Áfram →</button>
+    </div>`;
+}
+function attachIIBuilder() {
+  updateIIPreview();
+}
+function updateIIPreview() {
+  const when = document.getElementById('iiWhen')?.value || '';
+  const what = document.getElementById('iiWhat')?.value || '';
+  const where = document.getElementById('iiWhere')?.value || '';
+  const how = document.getElementById('iiHow')?.value || '';
+  const prev = document.getElementById('iiPreview');
+  if (!prev) return;
+  if (!when && !what) { prev.innerHTML = '<em style="color:var(--muted)">Fylltu inn að ofan...</em>'; return; }
+  prev.innerHTML = `„Þegar <span>${when||'...'}</span>, þá mun ég <span>${what||'...'}</span>${where?`, í <span>${where}</span>`:''}${how?`, í <span>${how}</span>`:''}."`;
+  data.iiWhen = when; data.iiWhat = what; data.iiWhere = where; data.iiHow = how;
+}
+function nextStep4() {
+  data.iiWhen = document.getElementById('iiWhen').value;
+  data.iiWhat = document.getElementById('iiWhat').value;
+  data.iiWhere = document.getElementById('iiWhere').value;
+  data.iiHow = document.getElementById('iiHow').value;
+  saveData(); renderStep(5);
+}
+
+// ── STEP 5: HABIT STACKING ───────────────────────────────
+function renderStep5() {
+  return `
+    <div class="step-icon">🔗</div>
+    <h2>Tengdu við núverandi venjur</h2>
+    <p class="intro">Habit stacking (BJ Fogg — Tiny Habits) þýðir að tengja nýja hegðun við eitthvað sem þú gerir nú þegar. Heilinn tengir nýju hegðunina við þetta merki og gerir hana sjálfvirka fyrr.</p>
+    <div class="theory-box">
+      <strong>Formúlan:</strong> „Eftir að ég [núverandi venja], mun ég [ný hegðun]." — Þetta notar þegar til staðar taugabrautir og gerir nýju hegðunina auðveldari. Ert þú að tengja æfinguna við sterk merki.
+    </div>
+    <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px">Veldu þá venju sem er sterkust merki í morgunsrútin þinni:</p>
+    <div class="habit-list" id="habitList">
+      ${HABITS.map((h,j) => `
+        <div class="habit-opt ${data.habitIdx===j?'selected':''}" onclick="selectHabit(${j})">
+          <span class="ho">${h.icon}</span>
+          <span>${h.text}</span>
+        </div>`).join('')}
+    </div>
+    <div class="field">
+      <label>Eða skrifaðu þína eigin venju</label>
+      <input type="text" id="habitCustom" placeholder="Eftir að ég..." value="${data.habitCustom||''}">
+    </div>
+    <div class="ii-preview" id="stackPreview" style="margin-top:12px">
+      ${data.habitIdx !== undefined || data.habitCustom
+        ? `„Eftir að ég <span>${data.habitCustom || (HABITS[data.habitIdx]?.text||'...')}</span>, mun ég <span>${data.iiWhat||'gera HRV æfinguna'}</span>."`
+        : '<em style="color:var(--muted)">Veldu venju hér að ofan...</em>'}
+    </div>
+    <div class="btn-row" style="margin-top:20px">
+      <button class="btn-secondary" onclick="renderStep(4)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep5()">Áfram →</button>
+    </div>`;
+}
+function attachHabitList() {}
+function selectHabit(j) {
+  data.habitIdx = j;
+  data.habitCustom = '';
+  document.querySelectorAll('.habit-opt').forEach((el,k) => el.classList.toggle('selected', k===j));
+  document.getElementById('habitCustom').value = '';
+  const prev = document.getElementById('stackPreview');
+  if (prev) prev.innerHTML = `„Eftir að ég <span>${HABITS[j].text}</span>, mun ég <span>${data.iiWhat||'gera HRV æfinguna'}</span>."`;
+}
+function nextStep5() {
+  data.habitCustom = document.getElementById('habitCustom').value;
+  if (data.habitCustom) data.habitIdx = undefined;
+  saveData(); renderStep(6);
+}
+
+// ── STEP 6: COMMITMENT ───────────────────────────────────
+function renderStep6() {
+  const selectedValues = (data.values||[]).map(i=>VALUES[i].title).join(', ');
+  const habitText = data.habitCustom || (data.habitIdx !== undefined ? HABITS[data.habitIdx].text : '...');
+  return `
+    <div class="step-icon">✍️</div>
+    <h2>Þín persónulega skuldbinding</h2>
+    <p class="intro">Þú hefur unnið í gegnum öll skrefin. Nú er kominn tími til að setja þetta saman í eina skýra skuldbindingu. Rannsóknir sýna að skriflegar skuldbindingar — sérstaklega þegar við deilum þeim — auka líkurnar á framkvæmd.</p>
+    <div class="commitment-box">
+      <h3>📋 Breytingaáætlun þín</h3>
+      <div class="commitment-preview">
+        Ég, <span class="hl" id="commitName">${data.commitName||'_________'}</span>, skuldbind mig til að taka HRV heilsu mína alvarlega.<br><br>
+        Þetta skiptir máli vegna <span class="hl">${data.valuesText ? data.valuesText.substring(0,80)+'...' : (selectedValues||'gilda minna')}</span>.<br><br>
+        <strong>Áætlun mín:</strong> Þegar <span class="hl">${data.iiWhen||'...'}</span>, þá mun ég <span class="hl">${data.iiWhat||'...'}</span>.<br><br>
+        <strong>Vanaaðlögun:</strong> Eftir <span class="hl">${habitText}</span>, mun ég æfa.<br><br>
+        <strong>Ef hindrun kemur:</strong> <span class="hl">${data.wP ? data.wP.substring(0,100) : '...'}</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Nafnið þitt (til að gera þetta persónulegt)</label>
+      <input type="text" id="commitNameInput" placeholder="Nafnið þitt" value="${data.commitName||''}" oninput="document.getElementById('commitName').textContent=this.value||'_________';data.commitName=this.value;">
+    </div>
+    <div class="field">
+      <label>Eitt minnsta skref — hvað geri ég Í DAG?</label>
+      <input type="text" id="firstStep" placeholder="T.d. Set upp Öndunarverkfærið og prófa 5 mín" value="${data.firstStep||''}">
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="renderStep(5)">← Til baka</button>
+      <button class="btn-primary" onclick="nextStep6()">Búa til áætlunina →</button>
+    </div>`;
+}
+function nextStep6() {
+  data.commitName = document.getElementById('commitNameInput').value;
+  data.firstStep = document.getElementById('firstStep').value;
+  data.completed = true;
+  saveData(); renderStep(7);
+}
+
+// ── SUMMARY ──────────────────────────────────────────────
+function renderSummary() {
+  const selectedValues = (data.values||[]).map(i=>VALUES[i].icon+' '+VALUES[i].title).join(' · ');
+  const habitText = data.habitCustom || (data.habitIdx !== undefined ? HABITS[data.habitIdx].text : '—');
+  return `
+    <div class="summary-header">
+      <div class="summary-icon">🎯</div>
+      <h2>Áætlunin þín er tilbúin${data.commitName ? ', '+data.commitName : ''}!</h2>
+      <p>Þú hefur lokið við breytingaáætlun þína. Hér er samantektin.</p>
+    </div>
+
+    <div class="summary-section">
+      <h3>🌟 Gildi þín</h3>
+      <div class="summary-item">
+        <div class="si-label">Valin svið</div>
+        <div class="si-value">${selectedValues||'—'}</div>
+      </div>
+      <div class="summary-item">
+        <div class="si-label">Hvers vegna skiptir þetta máli</div>
+        <div class="si-value">${data.valuesText||'—'}</div>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>📊 Mikilvægi og trú</h3>
+      <div class="summary-item" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><div class="si-label">Mikilvægi</div><div class="si-value" style="font-size:1.4rem;font-weight:800;color:var(--accent)">${data.importance||'—'}/10</div></div>
+        <div><div class="si-label">Trú á sjálfan sig</div><div class="si-value" style="font-size:1.4rem;font-weight:800;color:var(--teal-light)">${data.confidence||'—'}/10</div></div>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>🌠 WOOP</h3>
+      <div class="summary-item"><div class="si-label">Draumurinn (W)</div><div class="si-value">${data.wW||'—'}</div></div>
+      <div class="summary-item"><div class="si-label">Besta niðurstaðan (O)</div><div class="si-value">${data.wO||'—'}</div></div>
+      <div class="summary-item"><div class="si-label">Stærsta hindrunin (O)</div><div class="si-value">${data.wO2||'—'}</div></div>
+      <div class="summary-item"><div class="si-label">Áætlun þegar hindrun kemur (P)</div><div class="si-value">${data.wP||'—'}</div></div>
+    </div>
+
+    <div class="summary-section">
+      <h3>⚡ Framkvæmdaáætlun</h3>
+      <div class="summary-item">
+        <div class="si-value" style="font-size:1rem;font-style:italic;color:var(--accent)">
+          „Þegar ${data.iiWhen||'...'}, þá mun ég ${data.iiWhat||'...'}${data.iiWhere?', í '+data.iiWhere:''}${data.iiHow?', í '+data.iiHow:''}."
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>🔗 Vanaaðlögun</h3>
+      <div class="summary-item">
+        <div class="si-value" style="font-style:italic;color:var(--teal-light)">
+          „Eftir að ég ${habitText}, mun ég ${data.iiWhat||'gera HRV æfinguna'}."
+        </div>
+      </div>
+    </div>
+
+    ${data.firstStep ? `<div class="summary-section">
+      <h3>🚀 Fyrsta skrefið í dag</h3>
+      <div class="summary-item" style="border-color:var(--green);background:rgba(72,187,120,0.08)">
+        <div class="si-value" style="color:var(--green);font-weight:600">${data.firstStep}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn-print" onclick="window.print()">🖨️ Prenta / Vista sem PDF</button>
+      <button class="btn-secondary" onclick="renderStep(0)">Fara aftur í byrjun</button>
+      <a href="toolkit.html" class="btn-primary" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center">Til baka í toolkit →</a>
+    </div>`;
+}
+
+// ── UTILS ────────────────────────────────────────────────
+function updateProgress(i) {
+  const isSum = i === 7;
+  document.getElementById('progressHeader').style.display = isSum ? 'none' : 'block';
+  if (isSum) return;
+  document.getElementById('stepLabel').textContent = `Skref ${i+1} af ${totalSteps}`;
+  document.getElementById('stepTitle').textContent = steps[i]?.label || '';
+  document.getElementById('progressFill').style.width = ((i+1)/totalSteps*100)+'%';
+  const dots = document.getElementById('stepDots');
+  dots.innerHTML = steps.map((_,j) => `<div class="dot ${j<i?'done':j===i?'active':''}"></div>`).join('');
+}
+
+function saveData() {
+  localStorage.setItem('hrv_breytingar', JSON.stringify(data));
+}
+
+// ── START ────────────────────────────────────────────────
+renderStep(data.completed ? 7 : currentStep);
+</script>
+</body>
+</html>
