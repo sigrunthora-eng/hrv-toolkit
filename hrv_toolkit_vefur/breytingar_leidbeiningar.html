@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="is">
+<head>
+<meta charset="UTF-8">
+<title>Breytingaáætlun — Leiðbeiningar og Fræðsla</title>
+<style>
+  /* ── SCREEN ── */
+  :root {
+    --bg: #0f1f35; --surface: #1e3456; --surface2: #243f6a;
+    --border: #2d4a72; --text: #e8f4fd; --muted: #8ab4d4;
+    --accent: #63d0ff; --teal: #38b2ac; --teal-light: #81e6d9;
+    --green: #48bb78; --purple: #b794f4; --orange: #f6ad55;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 32px 24px; line-height: 1.7;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; color: var(--muted);
+    font-size: 0.85rem; text-decoration: none; margin-bottom: 24px;
+  }
+
+  .print-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    color: white; border: none; border-radius: 10px;
+    padding: 10px 20px; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; margin-bottom: 32px; margin-left: 10px;
+  }
+
+  /* COVER */
+  .cover {
+    background: linear-gradient(135deg, #1e3456, #243f6a);
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 48px 40px; margin-bottom: 32px; text-align: center;
+  }
+  .cover-logo {
+    width: 72px; height: 72px; border-radius: 18px;
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; margin: 0 auto 20px;
+  }
+  .cover h1 { font-size: 1.9rem; font-weight: 900; margin-bottom: 8px; }
+  .cover .sub { font-size: 1rem; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+  .cover-meta {
+    display: inline-flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+    font-size: 0.78rem; color: var(--muted);
+  }
+  .cover-meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* SECTIONS */
+  .section { margin-bottom: 36px; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #2d7ab5, #38b2ac);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 800; flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 1.2rem; font-weight: 800; }
+  .section-header .step-icon { font-size: 1.4rem; }
+
+  p { margin-bottom: 12px; font-size: 0.92rem; }
+
+  .theory-box {
+    background: rgba(99,208,255,0.07); border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0; padding: 14px 18px; margin: 16px 0;
+    font-size: 0.85rem; color: var(--muted); line-height: 1.7;
+  }
+  .theory-box strong { color: var(--accent); }
+
+  .example-box {
+    background: rgba(56,178,172,0.08); border: 1px solid rgba(56,178,172,0.25);
+    border-radius: 12px; padding: 18px 20px; margin: 16px 0;
+  }
+  .example-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--teal); font-weight: 700; margin-bottom: 10px;
+  }
+  .example-box p { font-size: 0.87rem; color: var(--text); margin-bottom: 8px; }
+  .example-box .ex-q { color: var(--muted); font-style: italic; margin-bottom: 4px; }
+  .example-box .ex-a { color: var(--teal-light); font-weight: 600; padding-left: 12px; }
+
+  .tip-list { list-style: none; margin: 12px 0; }
+  .tip-list li {
+    padding: 8px 14px 8px 36px; position: relative;
+    font-size: 0.88rem; border-bottom: 1px solid rgba(45,74,114,0.3);
+  }
+  .tip-list li:last-child { border-bottom: none; }
+  .tip-list li::before {
+    content: attr(data-icon); position: absolute; left: 8px; top: 8px;
+  }
+
+  .formula-box {
+    background: rgba(183,148,244,0.1); border: 1px solid rgba(183,148,244,0.25);
+    border-radius: 12px; padding: 16px 20px; margin: 16px 0;
+    text-align: center;
+  }
+  .formula {
+    font-size: 1.1rem; font-weight: 700; color: var(--purple);
+    margin-bottom: 6px; letter-spacing: 0.02em;
+  }
+  .formula-sub { font-size: 0.78rem; color: var(--muted); }
+
+  .woop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .woop-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+  .woop-card .wl { font-size: 1.3rem; font-weight: 900; margin-bottom: 4px; }
+  .woop-card h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+  .woop-card p { font-size: 0.8rem; color: var(--muted); margin: 0; }
+  .woop-card .wex { font-size: 0.78rem; color: var(--teal-light); font-style: italic; margin-top: 8px; }
+
+  /* COMPLETE EXAMPLE */
+  .full-example {
+    background: var(--surface); border: 2px solid rgba(99,208,255,0.2);
+    border-radius: 16px; padding: 28px; margin: 24px 0;
+  }
+  .full-example h3 { font-size: 1rem; font-weight: 800; color: var(--accent); margin-bottom: 20px; }
+  .fe-step {
+    margin-bottom: 18px; padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fe-step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .fe-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 4px; }
+  .fe-content { font-size: 0.88rem; color: var(--text); line-height: 1.6; }
+  .fe-content em { color: var(--teal-light); }
+
+  /* REFERENCES */
+  .ref-list { list-style: none; }
+  .ref-list li {
+    font-size: 0.8rem; color: var(--muted); padding: 8px 0;
+    border-bottom: 1px solid rgba(45,74,114,0.3); line-height: 1.5;
+  }
+  .ref-list li:last-child { border-bottom: none; }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; color: #111; padding: 0; font-size: 11pt; }
+    .back-btn, .print-btn { display: none; }
+    .wrap { max-width: 100%; }
+
+    .cover { background: #f0f6ff; border: 2px solid #2d7ab5; border-radius: 12px; }
+    .cover h1 { color: #1a3a6b; }
+    .cover .sub { color: #555; }
+    .cover-meta { color: #555; }
+    .cover-logo { background: #2d7ab5; }
+
+    .section-header { border-bottom: 2px solid #2d7ab5; }
+    .section-header h2 { color: #1a3a6b; }
+    .section-num { background: #2d7ab5; color: white; }
+
+    .theory-box { background: #f0f8ff; border-left: 3px solid #2d7ab5; color: #444; }
+    .theory-box strong { color: #1a3a6b; }
+
+    .example-box { background: #f0fffe; border: 1px solid #38b2ac; }
+    .example-label { color: #2a8a85; }
+    .example-box p { color: #222; }
+    .example-box .ex-q { color: #666; }
+    .example-box .ex-a { color: #1a6b68; }
+
+    .formula-box { background: #f8f0ff; border: 1px solid #9b6dcc; }
+    .formula { color: #6b3fa0; }
+    .formula-sub { color: #666; }
+
+    .woop-card { background: #f5f8ff; border: 1px solid #bcd; }
+    .woop-card h4 { color: #1a3a6b; }
+    .woop-card p { color: #555; }
+    .woop-card .wex { color: #2a8a85; }
+
+    .full-example { background: #f8fbff; border: 2px solid #2d7ab5; }
+    .full-example h3 { color: #1a3a6b; }
+    .fe-label { color: #666; }
+    .fe-content { color: #222; }
+    .fe-content em { color: #2a8a85; }
+
+    .tip-list li { color: #222; border-bottom-color: #ddd; }
+    .ref-list li { color: #555; border-bottom-color: #ddd; }
+
+    .section { page-break-inside: avoid; }
+    .cover { page-break-after: always; }
+    h2, h3 { page-break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a href="toolkit.html" class="back-btn">← Toolkit</a>
+<button class="print-btn" onclick="window.print()">🖨️ Vista sem PDF</button>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-logo">✍️</div>
+  <h1>Breytingaáætlun</h1>
+  <p class="sub">Leiðbeiningar og fræðsla um 7 skrefa hegðunarbreytingarlíkanið<br>
+  Byggt á Motivational Interviewing, WOOP, ACT og Tiny Habits</p>
+  <div class="cover-meta">
+    <span>✍️ Sigrún Þóra</span>
+    <span>📚 Rannsóknartengt</span>
+    <span>⏱️ Lestur: ~15 mín</span>
+    <span>🧠 7 skref</span>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">💡</div>
+    <div class="step-icon"></div>
+    <h2>Af hverju er þetta verkfæri til?</h2>
+  </div>
+  <p>Við vitum öll að hreyfing, svefn og streitustjórnun eru góð fyrir okkur. En þekking ein og sér breytir ekki hegðun. Rannsóknir sýna að <strong>bil á milli þekkingar og framkvæmdar</strong> (e. intention-behaviour gap) er eitt af stærstu vandamálum í heilsufræðslu.</p>
+  <p>Þetta verkfæri notar sameiningu aðferða sem hafa sterkasta rannsóknarstuðning þegar kemur að raunverulegum hegðunarbreytingum. Eitt skref í einu — í þeirri röð sem skiptir máli.</p>
+  <div class="theory-box">
+    <strong>Rannsóknir sýna:</strong> Fólk sem gerir skriflega breytingaáætlun — með gildum, hindrunaráætlun og implementation intentions — er 2-3× líklegra til að framkvæma ætlaðar breytingar samanborið við þá sem hafa einungis góðan ásetning (Gollwitzer & Sheeran, 2006).
+  </div>
+</div>
+
+<!-- STEP 1: VALUES -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="step-icon">🌟</div>
+    <h2>Gildi þín — Hvers vegna skiptir þetta máli?</h2>
+  </div>
+  <p><strong>Acceptance and Commitment Therapy (ACT)</strong> kennir okkur að sjálfbærar breytingar eiga rætur í persónulegum gildum — ekki utankomandi þrýstingi eða skömm. Þegar við tengjum nýja hegðun við það sem við vitum að skiptir okkur mest máli, eykst <em>innri hvatning</em> (intrinsic motivation) sem er mun þrautseigari en ytri þrýstingur.</p>
+  <div class="theory-box">
+    <strong>Munurinn á markmiðum og gildum:</strong> Markmið eru eitthvað sem við getum náð og sett af stað (t.d. „missa 5 kg"). Gildi eru stefnumið — eitthvað sem við getum alltaf unnið í átt að (t.d. „vera heilbrigður og orkumikill foreldri"). Breytingar sem tengjast gildum þurfa ekki að bíða eftir að markmið náist.
+  </div>
+
+  <div class="example-box">
+    <div class="example-label">💬 Sýnidæmi — Gildi og tengsl við HRV æfingu</div>
+    <p class="ex-q">Spurning: „Hvers vegna skiptir heilsa og orka þín máli — hvað gerist í lífi þínu þegar þér líður vel?"</p>
+    <p class="ex-a">„Þegar ég er með góða orku, þá er ég til staðar með börnunum. Ég er ekki svo pirruð og streituþrunginn. Ég get einbeitt mér í vinnunni og skapað eitthvað sem ég er stolt af."</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">→ Þessi tengsl — heilsa → fjölskylda, einbeiting, stolt — eru miklu öflugri hvatning en „ég á að vera heilbrigðari".</p>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="💡">Hjálpaðu kúnnanum að finna 2-3 gildasvið þar sem heilsa hefur mest áhrif</li>
+    <li data-icon="💡">Settu spurninguna í samhengi: „Þegar þér líður vel og ert orkumikill — hvað breytist þá?"</li>
+    <li data-icon="⚠️">Forðastu: „Þú ættir að gera þetta vegna þess að..." — það veldur andspyrnu</li>
+  </ul>
+</div>
+
+<!-- STEP 2: MI RULERS -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="step-icon">📊</div>
+    <h2>MI Kvarðar — Mikilvægi og trú á sjálfan sig</h2>
+  </div>
+  <p><strong>Motivational Interviewing (MI)</strong> er rannsóknarlega studd samræðuaðferð þar sem markmiðið er að vekja breytingasamtal (e. change talk) hjá einstaklingnum sjálfum — ekki hjá þjálfaranum. Grundvallarhugmyndin er: <em>við trúum því sem við sjálf segjum</em>.</p>
+
+  <div class="theory-box">
+    <strong>OARS í MI:</strong> Open questions · Affirmations · Reflective listening · Summaries. Þetta eru grunnfærni MI sem veldur því að kúnninn upplifer sig sem sérfræðing í eigin lífi — ekki sem vandamál sem þarf að laga.
+  </div>
+
+  <p>Tveir kvarðar eru notaðir: <strong>Mikilvægi</strong> (hversu mikilvægt er breytingin?) og <strong>Trú</strong> (hversu trúr er þú þér um að þú getir gert þetta?). Bæði eru nauðsynleg — hátt mikilvægi en lág trú leiðir til vonbrigða. Há trú en lágt mikilvægi leiðir til „já en...".</p>
+
+  <div class="example-box">
+    <div class="example-label">💬 Sýnidæmi — MI Kvarðasamtal</div>
+    <p class="ex-q">Þjálfari: „Á kvarðanum 1-10, hversu mikilvægt er þér að byrja HRV biofeedback æfingu?"</p>
+    <p class="ex-a">Kúnni: „Ég gæfi þetta 7."</p>
+    <p class="ex-q">Þjálfari: „Áhugavert — hvers vegna 7 en ekki 3?"</p>
+    <p class="ex-a">Kúnni: „Vegna þess að ég veit að streitan er farin að hafa áhrif á fjölskyldulífið. Ég er alltaf þreytt/ur þegar ég kem heim."</p>
+    <p class="ex-q">Þjálfari: „Hvað þyrfti að gerast til að þú gæfir þessu 9?"</p>
+    <p class="ex-a">Kúnni: „Ef ég myndi sjá raunverulegar breytingar á HRV mælingunni minni..."</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">→ Kúnninn er að röktva breytinguna sjálfur — þjálfarinn er að hlusta og spyrja.</p>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="✅">Spurðu alltaf: „Hvers vegna gafst þú X en ekki lægra?" — þetta vekur change talk</li>
+    <li data-icon="✅">Ef trú er lág (1-4): Rannsakaðu hvað myndi hjálpa. Smækkun verkefnis? Stuðningur?</li>
+    <li data-icon="⚠️">Aldrei: „Þú ættir að gefa þessu hærra gildi" — þetta virkar í gagnstæða átt</li>
+    <li data-icon="💡">Bæði gildi undir 6: Ígrundaðu hvort tíminn er réttur — kaupsamningur (e. readiness) þarf að vera til staðar</li>
+  </ul>
+</div>
+
+<!-- STEP 3: AMBIVALENCE -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="step-icon">⚖️</div>
+    <h2>Tvíhyggja — Kostir og gallar breytinga</h2>
+  </div>
+  <p>Tvíhyggja (e. ambivalence) er eðlileg hluti af öllum breytingum. MI kennir okkur að <strong>berjast ekki við tvíhyggju</strong> heldur skoða hana með forvitni. Þegar við viðurkennum báðar hliðar — það sem dregur okkur áfram og það sem heldur okkur aftur — minnkar innri togstreita og innri hvatning eykst.</p>
+
+  <div class="theory-box">
+    <strong>„Rolling with resistance":</strong> Í stað þess að greiða leiðina eða þvinga, þá fylgir þjálfarinn kúnnanum — spyr, hlusta og endurspeglar. Ef kúnninn segir „Ég hef ekki tíma", þá er svarið ekki „Allir hafa 10 mínútur" heldur „Segðu mér meira — hvernig lítur dagurinn þinn út?"
+  </div>
+
+  <div class="example-box">
+    <div class="example-label">💬 Sýnidæmi — Tvíhyggja</div>
+    <p class="ex-q">Spurning: „Hvað myndi breytast til batnaðar ef þú byrjaðir?"</p>
+    <p class="ex-a">„Ég myndi vera rólegri, sofa betur, vera meira til staðar. HRV mælingarnar gætu sýnt framfarir."</p>
+    <p class="ex-q">Spurning: „Og hvað heldur þig aftur eða gæti komið í veg?"</p>
+    <p class="ex-a">„Ég man það ekki alltaf. Og þegar dagurinn er þungur þá er síðasta sem mig langar að gera að setjast niður og anda."</p>
+    <p class="ex-q">Þjálfari: „Þú sérð bæði hlið — þú vilt þetta, en þú veist líka að þreyta er hindrun. Hvað segir innri rödd þín þegar þú hlustar á hvoru tveggja?"</p>
+    <p class="ex-a">„Að ég þurfi að gera þetta einfaldara. Klárlega ekki 20 mínútur þegar ég er þreytt/ur."</p>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="✅">Láttu kúnnann skrifa báðar hliðar án þess að dæma — þetta eitt og sér er læknandi</li>
+    <li data-icon="💡">Þegar hindranir eru skráðar → þær verða hluti af WOOP áætluninni</li>
+    <li data-icon="💡">Leggðu áherslu á: „Það er eðlilegt að vera tvíbent — það þýðir að þetta þýðir eitthvað"</li>
+  </ul>
+</div>
+
+<!-- STEP 4: WOOP -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="step-icon">🌠</div>
+    <h2>WOOP — Frá draumi til áætlunar</h2>
+  </div>
+  <p><strong>WOOP</strong> (Gabriele Oettingen, NYU) er rannsóknarlega studdasta aðferðin til að breyta ásetningi í framkvæmd. Hún sameinar jákvæða framtíðarsýn (Wish + Outcome) við raunhæfa hindrunarskipulagningu (Obstacle + Plan). Rannsóknir sýna að WOOP er marktækt áhrifaríkara en jákvæð hugsun ein og sér — og að sleppa einhverjum skrefanna minnkar áhrifin verulega.</p>
+
+  <div class="theory-box">
+    <strong>Af hverju virkar WOOP?</strong> Einungis jákvæð framtíðarhugsun getur dregið úr hvatningu vegna þess að heilinn upplifir markmiðið sem þegar náð. WOOP bætir við „Mental Contrasting" — við hugsum bæði um drauminn OG hindranirnar — sem heldur heilann á „óleyst vandamál" stillingu og eykur hvatningu.
+  </div>
+
+  <div class="woop-grid">
+    <div class="woop-card">
+      <div class="wl" style="color:#63d0ff">W</div>
+      <h4>Wish — Draumurinn</h4>
+      <p>Raunhæfur og persónulegur draumur fyrir næstu 8 vikur. Ekki of stór, ekki of lítill.</p>
+      <p class="wex">„Ég vil finna mér meira ró á vinnudaginn og sofa betur."</p>
+    </div>
+    <div class="woop-card">
+      <div class="wl" style="color:#48bb78">O</div>
+      <h4>Outcome — Besta niðurstaðan</h4>
+      <p>Lokaðu augunum. Hvernig <em>líðurðu</em> þegar þetta hefur gengið upp? Hvað breytist?</p>
+      <p class="wex">„Ég kæmi heim og myndi vera til staðar. Maðurinn minn myndi taka eftir breytingunni."</p>
+    </div>
+    <div class="woop-card">
+      <div class="wl" style="color:#f6ad55">O</div>
+      <h4>Obstacle — Stærsta hindrunin</h4>
+      <p>Hvað <em>inni í þér</em> gæti stoppað þig? Ekki ytri aðstæður — innri hindrun.</p>
+      <p class="wex">„Þegar ég er þreytt/ur þá man ég það ekki og nenni ekki."</p>
+    </div>
+    <div class="woop-card">
+      <div class="wl" style="color:#b794f4">P</div>
+      <h4>Plan — Þegar hindrunin kemur</h4>
+      <p>Implementation intention: Þegar [hindrun], þá mun ég [aðgerð].</p>
+      <p class="wex">„Þegar ég er þreytt/ur og man það ekki, þá mun ég setja 3 mínútna tímara og gera bara einn andardrátt."</p>
+    </div>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="✅">Mikilvægt: Obstacle á að vera <em>innri</em> — hugsun, tilfinning, líkamleg ástand — ekki ytri (tími, staður)</li>
+    <li data-icon="✅">Plan-ið á að vera einfalt og raunhæft — eitthvað sem hægt er að gera á 30 sekúndum</li>
+    <li data-icon="💡">Endurtaktu WOOP reglulega — t.d. í upphafi hverrar viku</li>
+    <li data-icon="⚠️">Ef Wish er of stórt (t.d. „breyta lífi mínu") — smækkaðu í eitthvað nákvæmara</li>
+  </ul>
+</div>
+
+<!-- STEP 5: IMPLEMENTATION INTENTIONS -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="step-icon">⚡</div>
+    <h2>Þegar... þá... — Implementation Intentions</h2>
+  </div>
+  <p><strong>Implementation intentions</strong> (Peter Gollwitzer, 1999) eru ein af best rannsakuðustu hegðunarbreytingartækni sem til eru. Meta-greining á 94 rannsóknum sýndi að þær tvöfalda að þrefalda líkurnar á að æskileg hegðun eigi sér stað — samanborið við einskæran ásetning.</p>
+
+  <div class="formula-box">
+    <div class="formula">„Þegar [sérstakt merki/augnablik], þá mun ég [sérstæk aðgerð], í [stað]."</div>
+    <div class="formula-sub">Því nákvæmari sem formúlan er — því sterkari eru áhrifin</div>
+  </div>
+
+  <p>Ástæðan fyrir virkni þeirra er sú að þær <em>tengja hegðunina við sérstakt merki í umhverfinu</em>. Heilinn þarf þá ekki að taka ákvörðun um hvenær og hvernig — það er þegar ákveðið. Þetta dregur úr þörfinni á viljastyrk.</p>
+
+  <div class="example-box">
+    <div class="example-label">💬 Sýnidæmi — Frá lélegum ásetningi til góðrar áætlunar</div>
+    <p><strong style="color:var(--muted)">Lélegur ásetningur:</strong></p>
+    <p class="ex-a" style="color:rgba(252,129,129,0.9)">„Ég ætla að æfa HRV biofeedback reglulega."</p>
+    <p style="margin-top:10px"><strong style="color:var(--muted)">Góð implementation intention:</strong></p>
+    <p class="ex-a">„Þegar klukkan slær 07:15 á virkum dögum og ég er enn í rúminu, þá mun ég opna Öndunarverkfærið og gera 10 mínútna æfingu áður en ég stend upp."</p>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:8px">→ Merki (klukka), aðgerð (opna app), staðsetning (í rúminu), tími (10 mín) — allt tilgreint.</p>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="✅">Merki á að vera eitthvað sem gerist <em>örugglega</em> á hverjum degi</li>
+    <li data-icon="✅">Byrjaðu með minnsta mögulega — „1 mínúta" er betra en „20 mínútur sem gerist aldrei"</li>
+    <li data-icon="💡">Tengdu við staðsetningu: „þegar ég set mig niður við skrifborðið" — staðir eru öflug merki</li>
+    <li data-icon="⚠️">Of margar implementation intentions í einu veikja áhrifin — veldu eina og haltu fast í hana</li>
+  </ul>
+</div>
+
+<!-- STEP 6: HABIT STACKING -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="step-icon">🔗</div>
+    <h2>Vanaaðlögun — Habit Stacking</h2>
+  </div>
+  <p><strong>Habit stacking</strong> (BJ Fogg — Tiny Habits) notar þegar til staðar taugabrautir til að „festa" nýja hegðun við núverandi venjur. Hugmyndin er einföld: við tengjum nýju hegðunina við eitthvað sem við gerum <em>nú þegar</em> á hverjum degi — og heilinn byrjar að tengja þessar tvær hegðanir saman.</p>
+
+  <div class="formula-box">
+    <div class="formula">„Eftir að ég [núverandi venja], mun ég [ný hegðun]."</div>
+    <div class="formula-sub">„Eftir" er lykilorðið — tengir við lok/upphaf annarrar venju</div>
+  </div>
+
+  <p>BJ Fogg bætir við „Celebration" — smá fagnaðarlæti eftir framkvæmd. Þetta þjálfar dopamín-kerfið til að tengja góða tilfinningu við nýju hegðunina og gerir hana líklegri til að endurtakast.</p>
+
+  <div class="example-box">
+    <div class="example-label">💬 Sýnidæmi — Vanaaðlögun í þrjár stærðir</div>
+    <p><strong style="color:var(--muted)">Lítið (byrjunarstig):</strong></p>
+    <p class="ex-a">„Eftir að ég hella upp kaffið á morgnana, mun ég taka 3 djúpa andardrátt."</p>
+    <p><strong style="color:var(--muted)">Miðlungs:</strong></p>
+    <p class="ex-a">„Eftir að ég er búin/n að bursta tennurnar, mun ég gera 5 mínútna HRV öndunarfærni."</p>
+    <p><strong style="color:var(--muted)">Fullt:</strong></p>
+    <p class="ex-a">„Eftir að ég set mig niður við skrifborðið kl. 08:00, mun ég gera 10 mínútna HRV æfingu áður en ég opna tölvupóstinn."</p>
+  </div>
+
+  <ul class="tip-list">
+    <li data-icon="✅">Veldu venjuna sem er sterkasta merki í morgunrútínu — það sem þú gerir ALLTAF</li>
+    <li data-icon="✅">Byrjaðu smátt — 2 mínútur er nóg til að festa vanann</li>
+    <li data-icon="💡">Fagnaðarlæti virkar: „Gott hjá mér!" eftir framkvæmd — alveg sannarlega</li>
+    <li data-icon="⚠️">Forðastu að tengja við venjur sem geta brotið niður (t.d. „þegar ég sofna" — of óreglulegt)</li>
+  </ul>
+</div>
+
+<!-- FULL EXAMPLE -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">📋</div>
+    <div class="step-icon"></div>
+    <h2>Heildardæmi — Fullgerð breytingaáætlun</h2>
+  </div>
+  <p>Hér að neðan er fullgerð breytingaáætlun fyrir skáldaðan einstakling — til að sýna hvernig öll skrefin tengjast saman.</p>
+
+  <div class="full-example">
+    <h3>👤 Dæmi: Anna, 38 ára, framkvæmdastjóri, tvær börn</h3>
+
+    <div class="fe-step">
+      <div class="fe-label">🌟 Gildi</div>
+      <div class="fe-content">Valin svið: <em>Fjölskylda, Vinna, Hugar-ró</em><br>
+      „Þegar ég er orkumikil og róleg, þá er ég til staðar með börnunum. Ég er ekki pirruð yfir smáhlutum og get einbeitt mér í vinnunni. Ég vil vera fyrirsæta um heilbrigða lífsstíl."</div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">📊 MI Kvarðar</div>
+      <div class="fe-content">Mikilvægi: <em>8/10</em> — „Vegna þess að streitan er farin að hafa áhrif á allt"<br>
+      Trú: <em>6/10</em> — „Ef ég geri þetta einfaldara og get tengt við morgunina"</div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">⚖️ Tvíhyggja</div>
+      <div class="fe-content">Kostir: <em>Betri svefn, minni pirringur, mælanleg HRV framför, líðan batnar</em><br>
+      Gallar/hindranir: <em>Man það ekki þegar dagurinn er þungur, barnið vaknar oft snemma og truflar</em></div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">🌠 WOOP</div>
+      <div class="fe-content">
+      W: <em>„Ná RMSSD yfir 40ms og finna mér meira ró á vinnudaginn innan 8 vikna"</em><br>
+      O: <em>„Ég myndi vakna á morgnana og líða ekki strax þreytt. Ég myndi vera til staðar í kvöldmat."</em><br>
+      O (hindrun): <em>„Þegar ég er svo þreytt/ur að mig langar bara að taka símann."</em><br>
+      P: <em>„Þegar mig langar að taka símann um leið og ég vakna, þá mun ég opna öndunarappið í staðinn og gera 3 mínútur."</em></div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">⚡ Framkvæmdaáætlun</div>
+      <div class="fe-content">„Þegar <em>klukkan slær 06:45</em>, þá mun ég <em>opna Öndunarverkfærið og gera 10 mínútur</em>, <em>í rúminu</em>, <em>áður en ég stend upp</em>."</div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">🔗 Vanaaðlögun</div>
+      <div class="fe-content">„Eftir að ég <em>set símann á hleðslu um kvöldið</em>, mun ég <em>stilla 06:45 alarm og setja öndunarappið á fyrsta skjáinn</em>."</div>
+    </div>
+
+    <div class="fe-step">
+      <div class="fe-label">🚀 Fyrsta skrefið í dag</div>
+      <div class="fe-content" style="color:var(--green);font-weight:600">„Setja upp Öndunarverkfærið og prófa 3 mínútur núna — áður en ég fer af þessari síðu."</div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCES -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">📚</div>
+    <div class="step-icon"></div>
+    <h2>Heimildir og frekara lesefni</h2>
+  </div>
+  <ul class="ref-list">
+    <li><strong>Gollwitzer, P. M., & Sheeran, P. (2006).</strong> Implementation intentions and goal achievement: A meta-analysis of effects and processes. <em>Advances in Experimental Social Psychology, 38</em>, 69–119.</li>
+    <li><strong>Miller, W. R., & Rollnick, S. (2013).</strong> <em>Motivational Interviewing: Helping People Change</em> (3rd ed.). Guilford Press.</li>
+    <li><strong>Oettingen, G. (2014).</strong> <em>Rethinking Positive Thinking: Inside the New Science of Motivation</em>. Current.</li>
+    <li><strong>Fogg, B. J. (2019).</strong> <em>Tiny Habits: The Small Changes That Change Everything</em>. Houghton Mifflin Harcourt.</li>
+    <li><strong>Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2012).</strong> <em>Acceptance and Commitment Therapy: The Process and Practice of Mindful Change</em> (2nd ed.). Guilford Press.</li>
+    <li><strong>Deci, E. L., & Ryan, R. M. (2000).</strong> The „what" and „why" of goal pursuits: Human needs and the self-determination of behavior. <em>Psychological Inquiry, 11</em>(4), 227–268.</li>
+    <li><strong>Leventhal, H., et al. (1992).</strong> The common-sense model of illness danger. In S. Rachman (Ed.), <em>Contributions to Medical Psychology</em>. Pergamon Press.</li>
+  </ul>
+</div>
+
+</div><!-- /wrap -->
+</body>
+</html>
